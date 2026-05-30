@@ -289,6 +289,76 @@
     }
     .delete-btn:hover { color: var(--red); background: var(--red-bg); }
 
+    /* ===== BULK ACTIONS ===== */
+    .bulk-bar {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      margin-bottom: 14px;
+      font-size: 13px;
+    }
+    .bulk-bar.show { display: flex; }
+    .bulk-bar-count { color: var(--text2); font-weight: 500; flex: 1; }
+    .bulk-delete-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: var(--red-bg);
+      color: var(--red);
+      border: 1px solid var(--red);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.12s;
+    }
+    .bulk-delete-btn:hover { opacity: 0.8; }
+    .bulk-cancel-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      background: none;
+      color: var(--text3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      transition: all 0.12s;
+    }
+    .bulk-cancel-btn:hover { border-color: var(--border2); color: var(--text); }
+    .select-all-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text3);
+      border-radius: 20px;
+      font-size: 12px;
+      transition: all 0.12s;
+      cursor: pointer;
+    }
+    .select-all-btn:hover { border-color: var(--border2); color: var(--text2); }
+    .select-all-btn.active { background: var(--accent); color: var(--accent-inv); border-color: var(--accent); }
+    /* checkbox on word card */
+    .word-checkbox {
+      width: 16px; height: 16px;
+      border: 1.5px solid var(--border2);
+      border-radius: 4px;
+      cursor: pointer;
+      flex-shrink: 0;
+      accent-color: var(--accent);
+      margin-right: 4px;
+      display: none;
+    }
+    .select-mode .word-checkbox { display: block; }
+    .word-card.selected { background: var(--bg2); border-color: var(--border2); }
+
     /* ===== EMPTY STATE ===== */
     .empty-state {
       display: flex;
@@ -632,6 +702,21 @@
           <button class="filter-chip" onclick="filterPOS('adj',this)">형용사</button>
           <button class="filter-chip" onclick="filterPOS('adv',this)">부사</button>
           <button class="filter-chip" onclick="filterPOS('prep',this)">전치사</button>
+          <button class="select-all-btn" id="select-mode-btn" onclick="toggleSelectMode()" style="margin-left:auto">
+            <i class="ti ti-checkbox"></i> 선택
+          </button>
+        </div>
+        <div class="bulk-bar" id="bulk-bar">
+          <span class="bulk-bar-count" id="bulk-count">0개 선택됨</span>
+          <button class="select-all-btn active" id="select-all-btn" onclick="selectAllWords()">
+            <i class="ti ti-checks"></i> 전체 선택
+          </button>
+          <button class="bulk-delete-btn" onclick="deleteSelected()">
+            <i class="ti ti-trash"></i> 선택 삭제
+          </button>
+          <button class="bulk-cancel-btn" onclick="toggleSelectMode()">
+            <i class="ti ti-x"></i> 취소
+          </button>
         </div>
         <div id="word-list"></div>
       </section>
@@ -799,6 +884,8 @@ let currentPart    = 'all';
 let currentPOS     = 'all';
 let parsedWords    = [];
 let playbackSpeed  = 1;
+let selectMode     = false;
+let selectedWords  = new Set(); // "en::pos" 형태의 키
 let quizType  = 1;
 let quizScope = 'all';
 let quizWords = [];
@@ -895,7 +982,12 @@ function renderWords() {
       </div>`;
     groups[pos].forEach(w => {
       const enSafe = w.en.replace(/'/g, "\\'");
-      html += `<div class="word-card">
+      const key = w.en + '::' + w.pos;
+      const checked = selectedWords.has(key) ? 'checked' : '';
+      const selClass = selectedWords.has(key) ? ' selected' : '';
+      html += `<div class="word-card${selClass}" id="card-${CSS.escape(key)}">
+        <input type="checkbox" class="word-checkbox" ${checked}
+          onchange="toggleWordSelect('${enSafe}','${w.pos}',this)" />
         <span class="word-en">${w.en}</span>
         <div class="word-sep"></div>
         <span class="word-ko">${w.ko}</span>
@@ -922,6 +1014,86 @@ function renderWords() {
     html += '</div>';
   });
   document.getElementById('word-list').innerHTML = html;
+
+  if (selectMode) {
+    document.getElementById('word-list').classList.add('select-mode');
+  }
+  updateBulkBar();
+}
+
+// ===================== SELECT MODE =====================
+function toggleSelectMode() {
+  selectMode = !selectMode;
+  selectedWords.clear();
+  const btn = document.getElementById('select-mode-btn');
+  const bar = document.getElementById('bulk-bar');
+  if (selectMode) {
+    btn.classList.add('active');
+    bar.classList.add('show');
+  } else {
+    btn.classList.remove('active');
+    bar.classList.remove('show');
+  }
+  renderWords();
+}
+
+function toggleWordSelect(en, pos, checkbox) {
+  const key = en + '::' + pos;
+  if (checkbox.checked) {
+    selectedWords.add(key);
+  } else {
+    selectedWords.delete(key);
+  }
+  // update card highlight
+  const card = document.getElementById('card-' + CSS.escape(key));
+  if (card) card.classList.toggle('selected', checkbox.checked);
+  updateBulkBar();
+}
+
+function selectAllWords() {
+  const list = getWords(currentSection, currentPart);
+  const filtered = currentPOS === 'all' ? list : list.filter(w => w.pos === currentPOS);
+  const allSelected = filtered.every(w => selectedWords.has(w.en + '::' + w.pos));
+  if (allSelected) {
+    // deselect all
+    filtered.forEach(w => selectedWords.delete(w.en + '::' + w.pos));
+  } else {
+    // select all
+    filtered.forEach(w => selectedWords.add(w.en + '::' + w.pos));
+  }
+  renderWords();
+}
+
+function updateBulkBar() {
+  const count = selectedWords.size;
+  document.getElementById('bulk-count').textContent = count + '개 선택됨';
+
+  const list = getWords(currentSection, currentPart);
+  const filtered = currentPOS === 'all' ? list : list.filter(w => w.pos === currentPOS);
+  const allSelected = filtered.length > 0 && filtered.every(w => selectedWords.has(w.en + '::' + w.pos));
+  const saBtn = document.getElementById('select-all-btn');
+  if (saBtn) {
+    saBtn.innerHTML = allSelected
+      ? '<i class="ti ti-square-minus"></i> 전체 해제'
+      : '<i class="ti ti-checks"></i> 전체 선택';
+  }
+}
+
+function deleteSelected() {
+  if (selectedWords.size === 0) { showToast('선택된 단어가 없습니다.'); return; }
+  if (!confirm(`선택한 ${selectedWords.size}개 단어를 삭제할까요?`)) return;
+  selectedWords.forEach(key => {
+    const [en, pos] = key.split('::');
+    ['p1','p2','p3','p4'].forEach(p => {
+      db.lc[p] = (db.lc[p] || []).filter(w => !(w.en === en && w.pos === pos));
+    });
+  });
+  const deleted = selectedWords.size;
+  selectedWords.clear();
+  saveDB();
+  updateBadges();
+  renderWords();
+  showToast(`${deleted}개 단어가 삭제됐습니다.`);
 }
 
 function deleteWord(en, pos) {
