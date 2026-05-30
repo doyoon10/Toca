@@ -678,6 +678,18 @@
     .fc-correct { background: var(--green-bg); color: var(--green); border: 1.5px solid var(--green); }
     .fc-correct:hover { opacity: 0.8; }
     .fc-audio-row { display: flex; gap: 8px; }
+    .fc-sound-icon {
+      font-size: 52px;
+      color: var(--text3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.92); }
+    }
 
     /* ===== SCROLLBAR ===== */
     ::-webkit-scrollbar { width: 5px; }
@@ -910,13 +922,12 @@
             <div class="flashcard" id="flashcard" onclick="flipCard()">
               <div class="flashcard-inner" id="flashcard-inner">
                 <div class="flashcard-front">
-                  <div class="flashcard-hint">클릭해서 뜻 보기</div>
-                  <div class="flashcard-en" id="fc-en"></div>
-                  <div class="flashcard-pos" id="fc-pos"></div>
+                  <div class="flashcard-hint">발음을 듣고 — 클릭해서 확인</div>
+                  <div class="fc-sound-icon"><i class="ti ti-volume"></i></div>
                 </div>
                 <div class="flashcard-back">
                   <div class="flashcard-hint">정답</div>
-                  <div class="flashcard-en" id="fc-en-back" style="font-size:18px;margin-bottom:6px"></div>
+                  <div class="flashcard-en" id="fc-en-back"></div>
                   <div class="flashcard-ko" id="fc-ko"></div>
                 </div>
               </div>
@@ -1407,15 +1418,22 @@ function showQuestion() {
   document.getElementById('qp-score').textContent = quizScore + '점';
 
   if (quizType === 1) {
-    // 플래시카드 모드
+    // 발음 듣기 플래시카드 모드
     fcFlipped = false;
     const inner = document.getElementById('flashcard-inner');
     inner.classList.remove('flipped');
-    document.getElementById('fc-en').textContent = w.en;
     document.getElementById('fc-en-back').textContent = w.en;
     document.getElementById('fc-ko').textContent = w.ko;
-    document.getElementById('fc-pos').textContent = POS_KO[w.pos] || w.pos;
     document.getElementById('fc-actions').style.display = 'none';
+    // 자동 발음 재생
+    const accents = ['us','uk','au'];
+    setTimeout(() => {
+      const u = new SpeechSynthesisUtterance(w.en);
+      u.lang = ACCENTS[accents[Math.floor(Math.random()*3)]];
+      u.rate = playbackSpeed;
+      window.speechSynthesis?.cancel();
+      window.speechSynthesis?.speak(u);
+    }, 200);
   } else {
     // 입력 모드
     const feedback = document.getElementById('q-feedback');
