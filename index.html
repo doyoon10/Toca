@@ -249,6 +249,8 @@
       transition: border-color 0.12s, box-shadow 0.12s;
     }
     .word-card:hover { border-color: var(--border2); box-shadow: var(--shadow); }
+    .word-card { contain: layout style; }
+    .content { will-change: scroll-position; }
     .word-en { font-size: 14px; font-weight: 500; color: var(--text); min-width: 150px; letter-spacing: -0.01em; }
     .word-sep { width: 1px; height: 16px; background: var(--border); margin: 0 14px; flex-shrink: 0; }
     .word-ko { font-size: 13px; color: var(--text2); flex: 1; }
@@ -995,16 +997,6 @@ function renderWords() {
           <button class="accent-pill" onclick="speak('${enSafe}','us',this)">🇺🇸 US</button>
           <button class="accent-pill" onclick="speak('${enSafe}','uk',this)">🇬🇧 UK</button>
           <button class="accent-pill" onclick="speak('${enSafe}','au',this)">🇦🇺 AU</button>
-          <div class="speed-wrap">
-            <label>속도</label>
-            <select class="speed-select" onchange="playbackSpeed=parseFloat(this.value)">
-              <option value="0.5">×0.5</option>
-              <option value="0.75">×0.75</option>
-              <option value="1" selected>×1.0</option>
-              <option value="1.25">×1.25</option>
-              <option value="1.5">×1.5</option>
-            </select>
-          </div>
           <button class="delete-btn" onclick="deleteWord('${enSafe}','${w.pos}')" title="삭제">
             <i class="ti ti-trash"></i>
           </button>
@@ -1013,12 +1005,12 @@ function renderWords() {
     });
     html += '</div>';
   });
-  document.getElementById('word-list').innerHTML = html;
-
-  if (selectMode) {
-    document.getElementById('word-list').classList.add('select-mode');
-  }
-  updateBulkBar();
+  const wordList = document.getElementById('word-list');
+  requestAnimationFrame(() => {
+    wordList.innerHTML = html;
+    if (selectMode) wordList.classList.add('select-mode');
+    updateBulkBar();
+  });
 }
 
 // ===================== SELECT MODE =====================
@@ -1133,25 +1125,17 @@ async function parseWords() {
   document.getElementById('preview-box').classList.remove('show');
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{
-          role: 'user',
-          content: `다음 입력에서 영어 단어들을 모두 추출하고, 각 단어의 토익 시험에 맞는 한국어 뜻과 품사를 분석해줘.
-반드시 순수 JSON 배열로만 응답해. 마크다운, 설명, 코드블록 없이 JSON만.
-형식: [{"en":"단어","ko":"한국어 뜻","pos":"noun|verb|adj|adv|prep"}]
-
-입력: ${input}`
-        }]
-      })
+      body: JSON.stringify({ input })
     });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `서버 오류 (${res.status})`);
+    }
     const data = await res.json();
-    const text = data.content.map(i => i.text || '').join('');
-    parsedWords = JSON.parse(text.replace(/```json|```/g, '').trim());
+    parsedWords = data.words;
 
     let html = '';
     parsedWords.forEach(w => {
