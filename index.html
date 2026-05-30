@@ -603,6 +603,82 @@
     .result-msg { font-size: 14px; color: var(--text3); margin-bottom: 28px; }
     .result-actions { display: flex; gap: 10px; justify-content: center; }
 
+    .quiz-stop-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 12px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text4);
+      transition: all 0.12s;
+      margin-left: 8px;
+    }
+    .quiz-stop-btn:hover { border-color: var(--red); color: var(--red); background: var(--red-bg); }
+
+    /* ===== FLASHCARD ===== */
+    .flashcard {
+      width: 100%;
+      max-width: 520px;
+      height: 220px;
+      perspective: 1000px;
+      cursor: pointer;
+      margin-bottom: 16px;
+    }
+    .flashcard-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.45s cubic-bezier(0.4,0,0.2,1);
+    }
+    .flashcard-inner.flipped { transform: rotateY(180deg); }
+    .flashcard-front, .flashcard-back {
+      position: absolute;
+      inset: 0;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      backface-visibility: hidden;
+      padding: 24px;
+      gap: 8px;
+    }
+    .flashcard-front:hover { border-color: var(--border2); box-shadow: var(--shadow-md); }
+    .flashcard-back { transform: rotateY(180deg); background: var(--bg2); border-color: var(--border2); }
+    .flashcard-hint { font-size: 11px; color: var(--text4); letter-spacing: 0.08em; text-transform: uppercase; }
+    .flashcard-en { font-size: 36px; font-weight: 700; letter-spacing: -0.03em; color: var(--text); }
+    .flashcard-ko { font-size: 26px; font-weight: 500; color: var(--text); }
+    .flashcard-pos { font-size: 12px; color: var(--text4); }
+    .fc-actions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .fc-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .fc-wrong { background: var(--red-bg); color: var(--red); border: 1.5px solid var(--red); }
+    .fc-wrong:hover { opacity: 0.8; }
+    .fc-correct { background: var(--green-bg); color: var(--green); border: 1.5px solid var(--green); }
+    .fc-correct:hover { opacity: 0.8; }
+    .fc-audio-row { display: flex; gap: 8px; }
+
     /* ===== SCROLLBAR ===== */
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -664,7 +740,7 @@
   <div class="body">
     <!-- SIDEBAR -->
     <aside class="sidebar">
-      <div class="sidebar-section-label">LC</div>
+      <div class="sidebar-section-label" id="sidebar-lc-label">LC</div>
       <div class="sidebar-item active" data-nav="lc-all" onclick="selectPart('lc','all',this)">
         <i class="ti ti-list"></i> 전체
         <span class="sidebar-badge" id="badge-lc-all">0</span>
@@ -684,6 +760,23 @@
       <div class="sidebar-item" data-nav="lc-p4" onclick="selectPart('lc','p4',this)">
         <i class="ti ti-speakerphone"></i> Part 4
         <span class="sidebar-badge" id="badge-lc-p4">0</span>
+      </div>
+      <div class="sidebar-section-label" style="margin-top:8px">RC</div>
+      <div class="sidebar-item" data-nav="rc-all" onclick="selectPart('rc','all',this)">
+        <i class="ti ti-list"></i> 전체
+        <span class="sidebar-badge" id="badge-rc-all">0</span>
+      </div>
+      <div class="sidebar-item" data-nav="rc-p5" onclick="selectPart('rc','p5',this)">
+        <i class="ti ti-list-numbers"></i> Part 5
+        <span class="sidebar-badge" id="badge-rc-p5">0</span>
+      </div>
+      <div class="sidebar-item" data-nav="rc-p6" onclick="selectPart('rc','p6',this)">
+        <i class="ti ti-align-left"></i> Part 6
+        <span class="sidebar-badge" id="badge-rc-p6">0</span>
+      </div>
+      <div class="sidebar-item" data-nav="rc-p7" onclick="selectPart('rc','p7',this)">
+        <i class="ti ti-file-text"></i> Part 7
+        <span class="sidebar-badge" id="badge-rc-p7">0</span>
       </div>
     </aside>
 
@@ -731,7 +824,11 @@
         <div class="add-view">
           <div class="form-row">
             <label class="form-label">파트 선택</label>
-            <select class="form-select" id="add-part">
+            <select class="form-select" id="add-section" onchange="updatePartSelect()">
+              <option value="lc">LC</option>
+              <option value="rc">RC</option>
+            </select>
+            <select class="form-select" id="add-part" style="margin-top:6px">
               <option value="p1">LC Part 1</option>
               <option value="p2">LC Part 2</option>
               <option value="p3">LC Part 3</option>
@@ -773,27 +870,27 @@
 
         <!-- Setup -->
         <div class="quiz-setup" id="quiz-setup">
+          <p class="quiz-section-label">섹션</p>
+          <div class="quiz-scope-row">
+            <button class="scope-chip active" data-qsec="lc" onclick="setQuizSection('lc',this)">LC</button>
+            <button class="scope-chip" data-qsec="rc" onclick="setQuizSection('rc',this)">RC</button>
+          </div>
           <p class="quiz-section-label">퀴즈 범위</p>
           <div class="quiz-scope-row" id="scope-row">
             <button class="scope-chip active" data-scope="all" onclick="setScope('all',this)">전체</button>
-            <button class="scope-chip" data-scope="p1" onclick="setScope('p1',this)">Part 1</button>
-            <button class="scope-chip" data-scope="p2" onclick="setScope('p2',this)">Part 2</button>
-            <button class="scope-chip" data-scope="p3" onclick="setScope('p3',this)">Part 3</button>
-            <button class="scope-chip" data-scope="p4" onclick="setScope('p4',this)">Part 4</button>
+            <button class="scope-chip" data-scope="p1" onclick="setScope('p1',this)" id="scope-p1">Part 1</button>
+            <button class="scope-chip" data-scope="p2" onclick="setScope('p2',this)" id="scope-p2">Part 2</button>
+            <button class="scope-chip" data-scope="p3" onclick="setScope('p3',this)" id="scope-p3">Part 3</button>
+            <button class="scope-chip" data-scope="p4" onclick="setScope('p4',this)" id="scope-p4">Part 4</button>
           </div>
-          <p class="quiz-section-label">퀴즈 유형</p>
-          <div class="quiz-type-grid">
-            <div class="quiz-type-card selected" id="qtype-1" onclick="setQuizType(1)">
-              <div class="qt-icon"><i class="ti ti-volume"></i></div>
-              <div class="qt-name">발음 듣고 뜻 쓰기</div>
-              <div class="qt-desc">미국·영국·호주 중 랜덤 발음을 듣고 한국어 뜻 입력</div>
-            </div>
-            <div class="quiz-type-card" id="qtype-2" onclick="setQuizType(2)">
-              <div class="qt-icon"><i class="ti ti-eye"></i></div>
-              <div class="qt-name">단어 보고 뜻 쓰기</div>
-              <div class="qt-desc">영어 단어를 보고 한국어 뜻 입력</div>
-            </div>
+          <p class="quiz-section-label">문제 수</p>
+          <div class="quiz-scope-row" id="count-row">
+            <button class="scope-chip" data-count="10" onclick="setQuizCount(10,this)">10개</button>
+            <button class="scope-chip" data-count="20" onclick="setQuizCount(20,this)">20개</button>
+            <button class="scope-chip" data-count="30" onclick="setQuizCount(30,this)">30개</button>
+            <button class="scope-chip active" data-count="all" onclick="setQuizCount('all',this)">전체</button>
           </div>
+          <p class="quiz-section-label" id="quiz-count-info" style="color:var(--text4);font-size:11px"></p>
           <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="startQuiz()">
             퀴즈 시작 <i class="ti ti-arrow-right"></i>
           </button>
@@ -805,20 +902,34 @@
             <span class="qp-text" id="qp-text">1 / 10</span>
             <div class="qp-bar"><div class="qp-fill" id="qp-fill" style="width:10%"></div></div>
             <span class="qp-score" id="qp-score">0점</span>
+            <button class="quiz-stop-btn" onclick="resetQuiz()" title="그만하기"><i class="ti ti-x"></i> 그만하기</button>
           </div>
-          <div class="qcard">
-            <div class="qcard-type" id="q-type-label">발음을 듣고 뜻을 입력하세요</div>
-            <div id="q-display"></div>
-            <div class="quiz-audio-row" id="q-audio-row" style="display:none">
+
+          <!-- 플래시카드 모드 -->
+          <div id="flashcard-mode">
+            <div class="flashcard" id="flashcard" onclick="flipCard()">
+              <div class="flashcard-inner" id="flashcard-inner">
+                <div class="flashcard-front">
+                  <div class="flashcard-hint">클릭해서 뜻 보기</div>
+                  <div class="flashcard-en" id="fc-en"></div>
+                  <div class="flashcard-pos" id="fc-pos"></div>
+                </div>
+                <div class="flashcard-back">
+                  <div class="flashcard-hint">정답</div>
+                  <div class="flashcard-en" id="fc-en-back" style="font-size:18px;margin-bottom:6px"></div>
+                  <div class="flashcard-ko" id="fc-ko"></div>
+                </div>
+              </div>
+            </div>
+            <div class="fc-actions" id="fc-actions" style="display:none">
+              <button class="fc-btn fc-wrong" onclick="fcAnswer(false)"><i class="ti ti-x"></i> 몰랐어요</button>
+              <button class="fc-btn fc-correct" onclick="fcAnswer(true)"><i class="ti ti-check"></i> 알았어요</button>
+            </div>
+            <div class="fc-audio-row">
               <button class="qaudio-btn" onclick="playAudio('us')"><i class="ti ti-volume"></i> 미국식</button>
               <button class="qaudio-btn" onclick="playAudio('uk')"><i class="ti ti-volume"></i> 영국식</button>
               <button class="qaudio-btn" onclick="playAudio('au')"><i class="ti ti-volume"></i> 호주식</button>
             </div>
-            <input class="quiz-input" id="q-input" placeholder="한국어 뜻을 입력하세요..."
-              onkeydown="if(event.key==='Enter') checkAnswer()" />
-            <button class="quiz-submit" id="q-submit" onclick="checkAnswer()">확인</button>
-            <div class="quiz-feedback" id="q-feedback"></div>
-            <button class="quiz-next" id="q-next" onclick="nextQuestion()">다음 문제 →</button>
           </div>
         </div>
 
@@ -873,7 +984,8 @@ let db = JSON.parse(localStorage.getItem('toca-db') || 'null') || {
       {en:'considerable',ko:'상당한',pos:'adj'},
       {en:'establish',ko:'설립하다',pos:'verb'},
     ],
-  }
+  },
+  rc: { p5:[], p6:[], p7:[] }
 };
 
 function saveDB() {
@@ -888,12 +1000,15 @@ let parsedWords    = [];
 let playbackSpeed  = 1;
 let selectMode     = false;
 let selectedWords  = new Set(); // "en::pos" 형태의 키
-let quizType  = 1;
-let quizScope = 'all';
-let quizWords = [];
-let quizIndex = 0;
-let quizScore = 0;
+let quizType     = 1;
+let quizScope    = 'all';
+let quizSection  = 'lc';
+let quizCount    = 'all';
+let quizWords    = [];
+let quizIndex    = 0;
+let quizScore    = 0;
 let quizAnswered = false;
+let fcFlipped    = false;
 
 // ===================== THEME =====================
 function toggleTheme() {
@@ -932,8 +1047,13 @@ function updateBadges() {
     const n = (db.lc[p] || []).length;
     document.getElementById('badge-lc-' + p).textContent = n;
   });
-  const total = Object.values(db.lc).flat().length;
-  document.getElementById('badge-lc-all').textContent = total;
+  document.getElementById('badge-lc-all').textContent = Object.values(db.lc).flat().length;
+  if (!db.rc) db.rc = {p5:[],p6:[],p7:[]};
+  ['p5','p6','p7'].forEach(p => {
+    const n = (db.rc[p] || []).length;
+    document.getElementById('badge-rc-' + p).textContent = n;
+  });
+  document.getElementById('badge-rc-all').textContent = Object.values(db.rc).flat().length;
 }
 
 function selectPart(section, part, el) {
@@ -941,8 +1061,8 @@ function selectPart(section, part, el) {
   currentPart    = part;
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
   el.classList.add('active');
-  const map = {all:'전체',p1:'Part 1',p2:'Part 2',p3:'Part 3',p4:'Part 4'};
-  document.getElementById('words-title').textContent = 'LC ' + map[part];
+  const map = {all:'전체',p1:'Part 1',p2:'Part 2',p3:'Part 3',p4:'Part 4',p5:'Part 5',p6:'Part 6',p7:'Part 7'};
+  document.getElementById('words-title').textContent = section.toUpperCase() + ' ' + map[part];
   renderWords();
 }
 
@@ -1160,12 +1280,14 @@ async function parseWords() {
 
 function confirmAdd() {
   if (!parsedWords.length) return;
-  const part = document.getElementById('add-part').value;
-  if (!db.lc[part]) db.lc[part] = [];
+  const section = document.getElementById('add-section').value;
+  const part    = document.getElementById('add-part').value;
+  if (!db[section]) db[section] = {};
+  if (!db[section][part]) db[section][part] = [];
   let added = 0;
   parsedWords.forEach(w => {
-    if (!db.lc[part].find(x => x.en === w.en)) {
-      db.lc[part].push(w);
+    if (!db[section][part].find(x => x.en === w.en)) {
+      db[section][part].push(w);
       added++;
     }
   });
@@ -1174,10 +1296,19 @@ function confirmAdd() {
   parsedWords = [];
   document.getElementById('add-input').value = '';
   document.getElementById('preview-box').classList.remove('show');
-  showToast(`${added}개 단어가 LC ${part.toUpperCase()}에 추가됐습니다!`);
-  // switch to words tab
+  showToast(`${added}개 단어가 ${section.toUpperCase()} ${part.toUpperCase()}에 추가됐습니다!`);
   document.querySelector('.topbar-nav button[data-tab="words"]').click();
-  selectPart('lc', part, document.querySelector(`.sidebar-item[data-nav="lc-${part}"]`));
+  selectPart(section, part, document.querySelector(`.sidebar-item[data-nav="${section}-${part}"]`));
+}
+
+function updatePartSelect() {
+  const sec = document.getElementById('add-section').value;
+  const sel = document.getElementById('add-part');
+  if (sec === 'lc') {
+    sel.innerHTML = '<option value="p1">LC Part 1</option><option value="p2">LC Part 2</option><option value="p3">LC Part 3</option><option value="p4">LC Part 4</option>';
+  } else {
+    sel.innerHTML = '<option value="p5">RC Part 5</option><option value="p6">RC Part 6</option><option value="p7">RC Part 7</option>';
+  }
 }
 
 function cancelAdd() {
@@ -1186,68 +1317,150 @@ function cancelAdd() {
 }
 
 // ===================== QUIZ =====================
+function setQuizSection(sec, btn) {
+  quizSection = sec;
+  document.querySelectorAll('[data-qsec]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // 범위 칩 업데이트
+  const scopeRow = document.getElementById('scope-row');
+  if (sec === 'lc') {
+    scopeRow.innerHTML = `
+      <button class="scope-chip active" data-scope="all" onclick="setScope('all',this)">전체</button>
+      <button class="scope-chip" data-scope="p1" onclick="setScope('p1',this)">Part 1</button>
+      <button class="scope-chip" data-scope="p2" onclick="setScope('p2',this)">Part 2</button>
+      <button class="scope-chip" data-scope="p3" onclick="setScope('p3',this)">Part 3</button>
+      <button class="scope-chip" data-scope="p4" onclick="setScope('p4',this)">Part 4</button>`;
+  } else {
+    scopeRow.innerHTML = `
+      <button class="scope-chip active" data-scope="all" onclick="setScope('all',this)">전체</button>
+      <button class="scope-chip" data-scope="p5" onclick="setScope('p5',this)">Part 5</button>
+      <button class="scope-chip" data-scope="p6" onclick="setScope('p6',this)">Part 6</button>
+      <button class="scope-chip" data-scope="p7" onclick="setScope('p7',this)">Part 7</button>`;
+  }
+  quizScope = 'all';
+  updateQuizCountInfo();
+}
+
 function setScope(scope, btn) {
   quizScope = scope;
-  document.querySelectorAll('.scope-chip').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#scope-row .scope-chip').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  updateQuizCountInfo();
+}
+
+function setQuizCount(count, btn) {
+  quizCount = count;
+  document.querySelectorAll('#count-row .scope-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updateQuizCountInfo();
+}
+
+function updateQuizCountInfo() {
+  const pool = getWords(quizSection, quizScope === 'all' ? 'all' : quizScope);
+  const max = pool.length;
+  // max lock: 개수 버튼이 max 초과하면 비활성화
+  document.querySelectorAll('#count-row .scope-chip[data-count]').forEach(btn => {
+    const c = btn.dataset.count;
+    if (c !== 'all') {
+      const n = parseInt(c);
+      btn.disabled = n > max;
+      btn.style.opacity = n > max ? '0.35' : '';
+      if (n > max && btn.classList.contains('active')) {
+        btn.classList.remove('active');
+        quizCount = 'all';
+        document.querySelector('#count-row .scope-chip[data-count="all"]').classList.add('active');
+      }
+    }
+  });
+  const actual = quizCount === 'all' ? max : Math.min(parseInt(quizCount), max);
+  const info = document.getElementById('quiz-count-info');
+  info.textContent = max === 0 ? '단어가 없습니다.' : `${max}개 중 ${actual}개 출제`;
 }
 
 function setQuizType(t) {
   quizType = t;
-  document.getElementById('qtype-1').classList.toggle('selected', t === 1);
-  document.getElementById('qtype-2').classList.toggle('selected', t === 2);
+  [1,2,3].forEach(i => document.getElementById('qtype-'+i).classList.toggle('selected', t === i));
 }
 
 function startQuiz() {
-  const pool = getWords('lc', quizScope === 'all' ? 'all' : quizScope);
+  const pool = getWords(quizSection, quizScope === 'all' ? 'all' : quizScope);
   if (pool.length < 2) { showToast('퀴즈를 시작하려면 최소 2개 이상의 단어가 필요합니다.'); return; }
-  quizWords = [...pool].sort(() => Math.random() - 0.5).slice(0, Math.min(10, pool.length));
-  quizIndex = 0; quizScore = 0; quizAnswered = false;
+  const limit = quizCount === 'all' ? pool.length : Math.min(parseInt(quizCount), pool.length);
+  quizWords = [...pool].sort(() => Math.random() - 0.5).slice(0, limit);
+  quizIndex = 0; quizScore = 0; quizAnswered = false; fcFlipped = false;
 
   document.getElementById('quiz-setup').style.display  = 'none';
   document.getElementById('quiz-game').style.display   = 'block';
   document.getElementById('quiz-result').style.display = 'none';
+
+  // 모드 전환
+  document.getElementById('flashcard-mode').style.display = 'block';
+
   showQuestion();
 }
 
 function showQuestion() {
   const w = quizWords[quizIndex];
   const total = quizWords.length;
-
   document.getElementById('qp-text').textContent = `${quizIndex + 1} / ${total}`;
   document.getElementById('qp-fill').style.width = ((quizIndex + 1) / total * 100) + '%';
   document.getElementById('qp-score').textContent = quizScore + '점';
 
-  const feedback = document.getElementById('q-feedback');
-  feedback.className = 'quiz-feedback';
-  const next = document.getElementById('q-next');
-  next.className = 'quiz-next';
-  const inp = document.getElementById('q-input');
-  inp.value = '';
-  inp.className = 'quiz-input';
-  document.getElementById('q-submit').style.display = 'block';
-  quizAnswered = false;
-
   if (quizType === 1) {
-    document.getElementById('q-type-label').textContent = '발음을 듣고 뜻을 입력하세요';
-    document.getElementById('q-display').innerHTML =
-      `<div class="qcard-icon-placeholder"><i class="ti ti-volume"></i></div>`;
-    document.getElementById('q-audio-row').style.display = 'flex';
-    const accents = ['us','uk','au'];
-    const rnd = accents[Math.floor(Math.random() * 3)];
-    setTimeout(() => {
-      if (!window.speechSynthesis) return;
-      const u = new SpeechSynthesisUtterance(w.en);
-      u.lang = ACCENTS[rnd];
-      u.rate = 1;
-      window.speechSynthesis.speak(u);
-    }, 300);
+    // 플래시카드 모드
+    fcFlipped = false;
+    const inner = document.getElementById('flashcard-inner');
+    inner.classList.remove('flipped');
+    document.getElementById('fc-en').textContent = w.en;
+    document.getElementById('fc-en-back').textContent = w.en;
+    document.getElementById('fc-ko').textContent = w.ko;
+    document.getElementById('fc-pos').textContent = POS_KO[w.pos] || w.pos;
+    document.getElementById('fc-actions').style.display = 'none';
   } else {
-    document.getElementById('q-type-label').textContent = '단어를 보고 뜻을 입력하세요';
-    document.getElementById('q-display').innerHTML = `<div class="qcard-word">${w.en}</div>`;
-    document.getElementById('q-audio-row').style.display = 'none';
+    // 입력 모드
+    const feedback = document.getElementById('q-feedback');
+    feedback.className = 'quiz-feedback';
+    const inp = document.getElementById('q-input');
+    inp.value = ''; inp.className = 'quiz-input';
+    document.getElementById('q-submit').style.display = 'block';
+    document.getElementById('q-next').className = 'quiz-next';
+    quizAnswered = false;
+
+    if (quizType === 3) {
+      document.getElementById('q-type-label').textContent = '발음을 듣고 뜻을 입력하세요';
+      document.getElementById('q-display').innerHTML = `<div class="qcard-icon-placeholder"><i class="ti ti-volume"></i></div>`;
+      document.getElementById('q-audio-row').style.display = 'flex';
+      const accents = ['us','uk','au'];
+      setTimeout(() => {
+        const u = new SpeechSynthesisUtterance(w.en);
+        u.lang = ACCENTS[accents[Math.floor(Math.random()*3)]];
+        u.rate = 1;
+        window.speechSynthesis?.speak(u);
+      }, 300);
+    } else {
+      document.getElementById('q-type-label').textContent = '단어를 보고 뜻을 입력하세요';
+      document.getElementById('q-display').innerHTML = `<div class="qcard-word">${w.en}</div>`;
+      document.getElementById('q-audio-row').style.display = 'none';
+    }
+    inp.focus();
   }
-  inp.focus();
+}
+
+function flipCard() {
+  if (fcFlipped) return;
+  fcFlipped = true;
+  document.getElementById('flashcard-inner').classList.add('flipped');
+  setTimeout(() => {
+    document.getElementById('fc-actions').style.display = 'flex';
+  }, 300);
+}
+
+function fcAnswer(correct) {
+  if (correct) quizScore += 10;
+  document.getElementById('qp-score').textContent = quizScore + '점';
+  quizIndex++;
+  if (quizIndex >= quizWords.length) showResult();
+  else { fcFlipped = false; showQuestion(); }
 }
 
 function playAudio(accent) {
@@ -1276,13 +1489,12 @@ function checkAnswer() {
     quizScore += 10;
     inp.classList.add('correct');
     fb.className = 'quiz-feedback correct';
-    fb.textContent = `정답! ✓  정답: "${w.ko}"`;
+    fb.textContent = `정답! ✓  "${w.ko}"`;
   } else {
     inp.classList.add('wrong');
     fb.className = 'quiz-feedback wrong';
     fb.textContent = `오답. 정답: "${w.ko}"`;
   }
-
   document.getElementById('q-submit').style.display = 'none';
   document.getElementById('q-next').className = 'quiz-next show';
   document.getElementById('qp-score').textContent = quizScore + '점';
@@ -1312,6 +1524,7 @@ function resetQuiz() {
   document.getElementById('quiz-setup').style.display  = 'block';
   document.getElementById('quiz-game').style.display   = 'none';
   document.getElementById('quiz-result').style.display = 'none';
+  updateQuizCountInfo();
 }
 
 // ===================== TOAST =====================
@@ -1327,6 +1540,7 @@ function showToast(msg) {
 // ===================== INIT =====================
 updateBadges();
 renderWords();
+updateQuizCountInfo();
 </script>
 </body>
 </html>
