@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Toca — TOEIC 단어장</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+    /* ===== CSS VARIABLES ===== */
+    :root {
+      --bg: #ffffff;
+      --bg2: #f9f9f9;
+      --bg3: #f2f2f2;
+      --border: #e5e5e5;
+      --border2: #d4d4d4;
+      --text: #0a0a0a;
+      --text2: #404040;
+      --text3: #737373;
+      --text4: #a3a3a3;
+      --accent: #0a0a0a;
+      --accent-inv: #ffffff;
+      --tag-noun-bg: #f0f0f0; --tag-noun: #1a1a1a;
+      --tag-verb-bg: #f0f0f0; --tag-verb: #1a1a1a;
+      --tag-adj-bg:  #f0f0f0; --tag-adj:  #1a1a1a;
+      --tag-adv-bg:  #f0f0f0; --tag-adv:  #1a1a1a;
+      --tag-prep-bg: #f0f0f0; --tag-prep: #1a1a1a;
+      --green-bg: #f0fdf4; --green: #15803d;
+      --red-bg:   #fef2f2; --red:   #b91c1c;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
+    [data-theme="dark"] {
+      --bg: #0a0a0a;
+      --bg2: #141414;
+      --bg3: #1f1f1f;
+      --border: #2a2a2a;
+      --border2: #3a3a3a;
+      --text: #fafafa;
+      --text2: #d4d4d4;
+      --text3: #a3a3a3;
+      --text4: #525252;
+      --accent: #fafafa;
+      --accent-inv: #0a0a0a;
+      --tag-noun-bg: #1f1f1f; --tag-noun: #d4d4d4;
+      --tag-verb-bg: #1f1f1f; --tag-verb: #d4d4d4;
+      --tag-adj-bg:  #1f1f1f; --tag-adj:  #d4d4d4;
+      --tag-adv-bg:  #1f1f1f; --tag-adv:  #d4d4d4;
+      --tag-prep-bg: #1f1f1f; --tag-prep: #d4d4d4;
+      --green-bg: #052e16; --green: #4ade80;
+      --red-bg:   #450a0a; --red:   #f87171;
+      --shadow: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    /* ===== RESET ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Inter', 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+      transition: background 0.2s, color 0.2s;
+    }
+    button, input, select, textarea {
+      font-family: inherit;
+      font-size: inherit;
+      color: inherit;
+      outline: none;
+    }
+    button { cursor: pointer; }
+
+    /* ===== LAYOUT ===== */
+    .app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+    /* ===== TOPBAR ===== */
+    .topbar {
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      height: 56px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      flex-shrink: 0;
+      gap: 16px;
+    }
+    .logo {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      flex-shrink: 0;
+    }
+    .logo sup {
+      font-size: 9px;
+      font-weight: 400;
+      color: var(--text3);
+      letter-spacing: 0.05em;
+      vertical-align: super;
+      margin-left: 2px;
+    }
+    .topbar-nav {
+      display: flex;
+      gap: 2px;
+      flex: 1;
+      padding-left: 8px;
+    }
+    .topbar-nav button {
+      background: none;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text3);
+      transition: all 0.15s;
+    }
+    .topbar-nav button:hover { background: var(--bg3); color: var(--text); }
+    .topbar-nav button.active { background: var(--bg3); color: var(--text); font-weight: 500; }
+    .topbar-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+    .icon-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      width: 34px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text3);
+      transition: all 0.15s;
+      font-size: 16px;
+    }
+    .icon-btn:hover { border-color: var(--border2); color: var(--text); background: var(--bg2); }
+
+    /* ===== BODY ===== */
+    .body { display: flex; flex: 1; overflow: hidden; }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: 210px;
+      border-right: 1px solid var(--border);
+      background: var(--bg);
+      overflow-y: auto;
+      flex-shrink: 0;
+      padding: 12px 0;
+    }
+    .sidebar-section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--text4);
+      text-transform: uppercase;
+      padding: 10px 16px 4px;
+    }
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 14px 7px 16px;
+      cursor: pointer;
+      border-left: 2px solid transparent;
+      color: var(--text3);
+      font-size: 13px;
+      transition: all 0.12s;
+      user-select: none;
+    }
+    .sidebar-item:hover { background: var(--bg2); color: var(--text2); }
+    .sidebar-item.active { border-left-color: var(--accent); background: var(--bg2); color: var(--text); font-weight: 500; }
+    .sidebar-item i { font-size: 15px; flex-shrink: 0; }
+    .sidebar-badge {
+      margin-left: auto;
+      font-size: 10px;
+      background: var(--bg3);
+      color: var(--text4);
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+    .sidebar-item.active .sidebar-badge { background: var(--border); color: var(--text3); }
+
+    /* ===== CONTENT ===== */
+    .content { flex: 1; overflow-y: auto; padding: 28px 32px; }
+
+    /* ===== VIEW HEADER ===== */
+    .view-header {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .view-title { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+    .view-subtitle { font-size: 13px; color: var(--text4); font-weight: 400; }
+
+    /* ===== FILTER ROW ===== */
+    .filter-row { display: flex; align-items: center; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+    .filter-label { font-size: 11px; color: var(--text4); margin-right: 4px; }
+    .filter-chip {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      transition: all 0.12s;
+    }
+    .filter-chip:hover { border-color: var(--border2); color: var(--text2); }
+    .filter-chip.active { background: var(--accent); color: var(--accent-inv); border-color: var(--accent); }
+
+    /* ===== POS GROUP ===== */
+    .pos-group { margin-bottom: 24px; }
+    .pos-group-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .pos-tag {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .pos-tag.noun { background: var(--tag-noun-bg); color: var(--tag-noun); }
+    .pos-tag.verb { background: var(--tag-verb-bg); color: var(--tag-verb); }
+    .pos-tag.adj  { background: var(--tag-adj-bg);  color: var(--tag-adj); }
+    .pos-tag.adv  { background: var(--tag-adv-bg);  color: var(--tag-adv); }
+    .pos-tag.prep { background: var(--tag-prep-bg); color: var(--tag-prep); }
+    .pos-tag.other{ background: var(--tag-prep-bg); color: var(--tag-prep); }
+    .pos-count { font-size: 12px; color: var(--text4); }
+
+    /* ===== WORD CARD ===== */
+    .word-card {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 10px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 5px;
+      transition: border-color 0.12s, box-shadow 0.12s;
+    }
+    .word-card:hover { border-color: var(--border2); box-shadow: var(--shadow); }
+    .word-en { font-size: 14px; font-weight: 500; color: var(--text); min-width: 150px; letter-spacing: -0.01em; }
+    .word-sep { width: 1px; height: 16px; background: var(--border); margin: 0 14px; flex-shrink: 0; }
+    .word-ko { font-size: 13px; color: var(--text2); flex: 1; }
+    .word-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; flex-shrink: 0; }
+    .accent-pill {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text4);
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 5px;
+      transition: all 0.12s;
+      white-space: nowrap;
+    }
+    .accent-pill:hover { border-color: var(--accent); color: var(--text); }
+    .accent-pill.playing { background: var(--accent); color: var(--accent-inv); border-color: var(--accent); }
+    .speed-wrap { display: flex; align-items: center; gap: 5px; padding-left: 8px; border-left: 1px solid var(--border); }
+    .speed-wrap label { font-size: 11px; color: var(--text4); }
+    .speed-select {
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text3);
+      padding: 3px 6px;
+      border-radius: 5px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .delete-btn {
+      background: none;
+      border: none;
+      color: var(--text4);
+      font-size: 15px;
+      padding: 4px;
+      border-radius: 5px;
+      transition: all 0.12s;
+      display: flex;
+      align-items: center;
+    }
+    .delete-btn:hover { color: var(--red); background: var(--red-bg); }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      color: var(--text4);
+      text-align: center;
+      gap: 10px;
+    }
+    .empty-state i { font-size: 36px; opacity: 0.4; }
+    .empty-state p { font-size: 14px; }
+
+    /* ===== ADD VIEW ===== */
+    .add-view { max-width: 600px; }
+    .form-row { margin-bottom: 18px; }
+    .form-label { font-size: 12px; font-weight: 500; color: var(--text3); margin-bottom: 6px; display: block; }
+    .form-select {
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .form-select:focus { border-color: var(--accent); }
+    .form-textarea {
+      width: 100%;
+      min-height: 130px;
+      border: 1px solid var(--border);
+      background: var(--bg2);
+      color: var(--text);
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      resize: vertical;
+      transition: border-color 0.15s;
+      line-height: 1.7;
+    }
+    .form-textarea:focus { border-color: var(--accent); background: var(--bg); }
+    .form-textarea::placeholder { color: var(--text4); }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      transition: all 0.15s;
+    }
+    .btn-primary { background: var(--accent); color: var(--accent-inv); }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-secondary { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--border2); background: var(--bg2); }
+    .btn-success { background: var(--green); color: white; }
+    .btn-success:hover { opacity: 0.9; }
+    .status-line {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text4);
+      margin-top: 10px;
+    }
+    .status-line.show { display: flex; }
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid var(--border2);
+      border-top-color: var(--text3);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .preview-box { display: none; margin-top: 18px; }
+    .preview-box.show { display: block; }
+    .preview-header { font-size: 12px; color: var(--text4); margin-bottom: 8px; }
+    .preview-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 13px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 5px;
+      font-size: 13px;
+    }
+    .preview-item .pi-en { font-weight: 500; min-width: 120px; color: var(--text); }
+    .preview-item .pi-ko { color: var(--text3); flex: 1; }
+    .preview-item .pi-pos { margin-left: auto; }
+    .confirm-row { display: flex; gap: 10px; margin-top: 14px; align-items: center; }
+
+    /* ===== QUIZ VIEW ===== */
+    .quiz-setup { max-width: 500px; }
+    .quiz-section-label { font-size: 12px; font-weight: 500; color: var(--text3); margin-bottom: 8px; }
+    .quiz-scope-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+    .scope-chip {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text3);
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      transition: all 0.12s;
+    }
+    .scope-chip:hover { border-color: var(--border2); color: var(--text2); }
+    .scope-chip.active { background: var(--accent); color: var(--accent-inv); border-color: var(--accent); }
+    .quiz-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
+    .quiz-type-card {
+      padding: 16px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: left;
+    }
+    .quiz-type-card:hover { border-color: var(--border2); }
+    .quiz-type-card.selected { border-color: var(--accent); background: var(--bg2); }
+    .qt-icon { font-size: 20px; color: var(--text3); margin-bottom: 8px; }
+    .qt-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+    .qt-desc { font-size: 11px; color: var(--text4); line-height: 1.5; }
+
+    /* ===== QUIZ GAME ===== */
+    .quiz-game { display: none; max-width: 520px; }
+    .quiz-progress-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+    .qp-text { font-size: 12px; color: var(--text4); min-width: 44px; }
+    .qp-bar { flex: 1; height: 3px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+    .qp-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s ease; }
+    .qp-score {
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--bg3);
+      color: var(--text3);
+      padding: 3px 10px;
+      border-radius: 10px;
+    }
+    .qcard {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 26px 24px 20px;
+    }
+    .qcard-type { font-size: 11px; color: var(--text4); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 14px; }
+    .qcard-word { font-size: 32px; font-weight: 600; letter-spacing: -0.03em; color: var(--text); margin-bottom: 14px; }
+    .qcard-icon-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 60px;
+      margin-bottom: 14px;
+      color: var(--text4);
+      font-size: 36px;
+    }
+    .quiz-audio-row { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+    .qaudio-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text3);
+      transition: all 0.12s;
+    }
+    .qaudio-btn:hover { border-color: var(--accent); color: var(--text); }
+    .quiz-input-wrap { position: relative; }
+    .quiz-input {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      background: var(--bg2);
+      color: var(--text);
+      padding: 11px 14px;
+      border-radius: var(--radius);
+      font-size: 15px;
+      transition: border-color 0.15s;
+    }
+    .quiz-input:focus { border-color: var(--accent); background: var(--bg); }
+    .quiz-input.correct { border-color: var(--green); background: var(--green-bg); }
+    .quiz-input.wrong { border-color: var(--red); background: var(--red-bg); }
+    .quiz-submit {
+      width: 100%;
+      margin-top: 10px;
+      padding: 11px;
+      background: var(--accent);
+      color: var(--accent-inv);
+      border: none;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 500;
+      transition: opacity 0.15s;
+    }
+    .quiz-submit:hover { opacity: 0.85; }
+    .quiz-feedback {
+      display: none;
+      margin-top: 10px;
+      padding: 11px 14px;
+      border-radius: var(--radius);
+      font-size: 13px;
+    }
+    .quiz-feedback.correct { display: block; background: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
+    .quiz-feedback.wrong { display: block; background: var(--red-bg); color: var(--red); border: 1px solid var(--red); }
+    .quiz-next {
+      display: none;
+      width: 100%;
+      margin-top: 8px;
+      padding: 10px;
+      background: var(--bg3);
+      color: var(--text2);
+      border: none;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      transition: background 0.12s;
+    }
+    .quiz-next:hover { background: var(--bg2); border: 1px solid var(--border2); }
+    .quiz-next.show { display: block; }
+
+    /* ===== QUIZ RESULT ===== */
+    .quiz-result {
+      display: none;
+      text-align: center;
+      padding: 50px 20px;
+    }
+    .result-score { font-size: 60px; font-weight: 700; letter-spacing: -0.04em; color: var(--text); }
+    .result-fraction { font-size: 22px; color: var(--text4); font-weight: 300; margin-bottom: 6px; }
+    .result-msg { font-size: 14px; color: var(--text3); margin-bottom: 28px; }
+    .result-actions { display: flex; gap: 10px; justify-content: center; }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
+
+    /* ===== TOAST ===== */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--accent);
+      color: var(--accent-inv);
+      padding: 10px 18px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: var(--shadow-md);
+      transform: translateY(10px);
+      opacity: 0;
+      transition: all 0.25s;
+      pointer-events: none;
+      z-index: 999;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 700px) {
+      .sidebar { display: none; }
+      .content { padding: 20px 16px; }
+      .quiz-type-grid { grid-template-columns: 1fr; }
+      .word-actions .speed-wrap { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="logo">Toca <sup>TOEIC</sup></div>
+    <nav class="topbar-nav">
+      <button class="active" data-tab="words" onclick="switchTab(this,'words')">
+        <i class="ti ti-books"></i> 단어장
+      </button>
+      <button data-tab="add" onclick="switchTab(this,'add')">
+        <i class="ti ti-plus"></i> 단어 추가
+      </button>
+      <button data-tab="quiz" onclick="switchTab(this,'quiz')">
+        <i class="ti ti-pencil"></i> 퀴즈
+      </button>
+    </nav>
+    <div class="topbar-right">
+      <button class="icon-btn" id="theme-toggle" onclick="toggleTheme()" title="다크/라이트 모드">
+        <i class="ti ti-moon" id="theme-icon"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="body">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-section-label">LC</div>
+      <div class="sidebar-item active" data-nav="lc-all" onclick="selectPart('lc','all',this)">
+        <i class="ti ti-list"></i> 전체
+        <span class="sidebar-badge" id="badge-lc-all">0</span>
+      </div>
+      <div class="sidebar-item" data-nav="lc-p1" onclick="selectPart('lc','p1',this)">
+        <i class="ti ti-photo"></i> Part 1
+        <span class="sidebar-badge" id="badge-lc-p1">0</span>
+      </div>
+      <div class="sidebar-item" data-nav="lc-p2" onclick="selectPart('lc','p2',this)">
+        <i class="ti ti-microphone"></i> Part 2
+        <span class="sidebar-badge" id="badge-lc-p2">0</span>
+      </div>
+      <div class="sidebar-item" data-nav="lc-p3" onclick="selectPart('lc','p3',this)">
+        <i class="ti ti-messages"></i> Part 3
+        <span class="sidebar-badge" id="badge-lc-p3">0</span>
+      </div>
+      <div class="sidebar-item" data-nav="lc-p4" onclick="selectPart('lc','p4',this)">
+        <i class="ti ti-speakerphone"></i> Part 4
+        <span class="sidebar-badge" id="badge-lc-p4">0</span>
+      </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <main class="content" id="content">
+
+      <!-- ── VIEW: WORDS ── -->
+      <section id="view-words">
+        <div class="view-header">
+          <h1 class="view-title" id="words-title">LC 전체</h1>
+          <span class="view-subtitle" id="words-subtitle"></span>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">품사</span>
+          <button class="filter-chip active" onclick="filterPOS('all',this)">전체</button>
+          <button class="filter-chip" onclick="filterPOS('noun',this)">명사</button>
+          <button class="filter-chip" onclick="filterPOS('verb',this)">동사</button>
+          <button class="filter-chip" onclick="filterPOS('adj',this)">형용사</button>
+          <button class="filter-chip" onclick="filterPOS('adv',this)">부사</button>
+          <button class="filter-chip" onclick="filterPOS('prep',this)">전치사</button>
+        </div>
+        <div id="word-list"></div>
+      </section>
+
+      <!-- ── VIEW: ADD ── -->
+      <section id="view-add" style="display:none">
+        <div class="view-header">
+          <h1 class="view-title">단어 추가</h1>
+        </div>
+        <div class="add-view">
+          <div class="form-row">
+            <label class="form-label">파트 선택</label>
+            <select class="form-select" id="add-part">
+              <option value="p1">LC Part 1</option>
+              <option value="p2">LC Part 2</option>
+              <option value="p3">LC Part 3</option>
+              <option value="p4">LC Part 4</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label class="form-label">단어 입력 — AI가 자동으로 뜻과 품사를 분석합니다</label>
+            <textarea class="form-textarea" id="add-input"
+              placeholder="예: announce, exhibit, pedestrian, frequently, adjacent, submit&#10;여러 줄로 입력하거나 쉼표로 구분해도 됩니다."></textarea>
+          </div>
+          <button class="btn btn-primary" id="parse-btn" onclick="parseWords()">
+            <i class="ti ti-sparkles"></i> AI로 분석하기
+          </button>
+          <div class="status-line" id="parse-status">
+            <div class="spinner"></div>
+            <span>AI가 단어를 분석하고 있습니다...</span>
+          </div>
+          <div class="preview-box" id="preview-box">
+            <p class="preview-header" id="preview-header">분석 결과 — 확인 후 추가하세요</p>
+            <div id="preview-list"></div>
+            <div class="confirm-row">
+              <button class="btn btn-success" onclick="confirmAdd()">
+                <i class="ti ti-check"></i> 단어장에 추가
+              </button>
+              <button class="btn btn-secondary" onclick="cancelAdd()">
+                <i class="ti ti-x"></i> 취소
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── VIEW: QUIZ ── -->
+      <section id="view-quiz" style="display:none">
+        <div class="view-header">
+          <h1 class="view-title">퀴즈</h1>
+        </div>
+
+        <!-- Setup -->
+        <div class="quiz-setup" id="quiz-setup">
+          <p class="quiz-section-label">퀴즈 범위</p>
+          <div class="quiz-scope-row" id="scope-row">
+            <button class="scope-chip active" data-scope="all" onclick="setScope('all',this)">전체</button>
+            <button class="scope-chip" data-scope="p1" onclick="setScope('p1',this)">Part 1</button>
+            <button class="scope-chip" data-scope="p2" onclick="setScope('p2',this)">Part 2</button>
+            <button class="scope-chip" data-scope="p3" onclick="setScope('p3',this)">Part 3</button>
+            <button class="scope-chip" data-scope="p4" onclick="setScope('p4',this)">Part 4</button>
+          </div>
+          <p class="quiz-section-label">퀴즈 유형</p>
+          <div class="quiz-type-grid">
+            <div class="quiz-type-card selected" id="qtype-1" onclick="setQuizType(1)">
+              <div class="qt-icon"><i class="ti ti-volume"></i></div>
+              <div class="qt-name">발음 듣고 뜻 쓰기</div>
+              <div class="qt-desc">미국·영국·호주 중 랜덤 발음을 듣고 한국어 뜻 입력</div>
+            </div>
+            <div class="quiz-type-card" id="qtype-2" onclick="setQuizType(2)">
+              <div class="qt-icon"><i class="ti ti-eye"></i></div>
+              <div class="qt-name">단어 보고 뜻 쓰기</div>
+              <div class="qt-desc">영어 단어를 보고 한국어 뜻 입력</div>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="startQuiz()">
+            퀴즈 시작 <i class="ti ti-arrow-right"></i>
+          </button>
+        </div>
+
+        <!-- Game -->
+        <div class="quiz-game" id="quiz-game">
+          <div class="quiz-progress-row">
+            <span class="qp-text" id="qp-text">1 / 10</span>
+            <div class="qp-bar"><div class="qp-fill" id="qp-fill" style="width:10%"></div></div>
+            <span class="qp-score" id="qp-score">0점</span>
+          </div>
+          <div class="qcard">
+            <div class="qcard-type" id="q-type-label">발음을 듣고 뜻을 입력하세요</div>
+            <div id="q-display"></div>
+            <div class="quiz-audio-row" id="q-audio-row" style="display:none">
+              <button class="qaudio-btn" onclick="playAudio('us')"><i class="ti ti-volume"></i> 미국식</button>
+              <button class="qaudio-btn" onclick="playAudio('uk')"><i class="ti ti-volume"></i> 영국식</button>
+              <button class="qaudio-btn" onclick="playAudio('au')"><i class="ti ti-volume"></i> 호주식</button>
+            </div>
+            <input class="quiz-input" id="q-input" placeholder="한국어 뜻을 입력하세요..."
+              onkeydown="if(event.key==='Enter') checkAnswer()" />
+            <button class="quiz-submit" id="q-submit" onclick="checkAnswer()">확인</button>
+            <div class="quiz-feedback" id="q-feedback"></div>
+            <button class="quiz-next" id="q-next" onclick="nextQuestion()">다음 문제 →</button>
+          </div>
+        </div>
+
+        <!-- Result -->
+        <div class="quiz-result" id="quiz-result">
+          <div class="result-score" id="r-score">8</div>
+          <div class="result-fraction" id="r-fraction">/ 10 정답</div>
+          <div class="result-msg" id="r-msg">훌륭합니다!</div>
+          <div class="result-actions">
+            <button class="btn btn-primary" onclick="startQuiz()">다시 풀기 <i class="ti ti-refresh"></i></button>
+            <button class="btn btn-secondary" onclick="resetQuiz()">설정으로 <i class="ti ti-settings"></i></button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===================== DATA =====================
+const ACCENTS = { us: 'en-US', uk: 'en-GB', au: 'en-AU' };
+const POS_KO   = { noun:'명사', verb:'동사', adj:'형용사', adv:'부사', prep:'전치사', phrase:'구', other:'기타' };
+const POS_ORDER = ['noun','verb','adj','adv','prep','phrase','other'];
+
+let db = JSON.parse(localStorage.getItem('toca-db') || 'null') || {
+  lc: {
+    p1: [
+      {en:'pedestrian',ko:'보행자',pos:'noun'},
+      {en:'adjacent',ko:'인접한',pos:'adj'},
+      {en:'merchandise',ko:'상품',pos:'noun'},
+      {en:'pile',ko:'쌓다 / 더미',pos:'verb'},
+    ],
+    p2: [
+      {en:'confirm',ko:'확인하다',pos:'verb'},
+      {en:'announce',ko:'발표하다',pos:'verb'},
+      {en:'frequently',ko:'자주',pos:'adv'},
+      {en:'deadline',ko:'마감일',pos:'noun'},
+    ],
+    p3: [
+      {en:'postpone',ko:'연기하다',pos:'verb'},
+      {en:'reservation',ko:'예약',pos:'noun'},
+      {en:'approximately',ko:'대략',pos:'adv'},
+      {en:'available',ko:'이용 가능한',pos:'adj'},
+    ],
+    p4: [
+      {en:'submit',ko:'제출하다',pos:'verb'},
+      {en:'exhibit',ko:'전시하다',pos:'verb'},
+      {en:'considerable',ko:'상당한',pos:'adj'},
+      {en:'establish',ko:'설립하다',pos:'verb'},
+    ],
+  }
+};
+
+function saveDB() {
+  localStorage.setItem('toca-db', JSON.stringify(db));
+}
+
+// ===================== STATE =====================
+let currentSection = 'lc';
+let currentPart    = 'all';
+let currentPOS     = 'all';
+let parsedWords    = [];
+let playbackSpeed  = 1;
+let quizType  = 1;
+let quizScope = 'all';
+let quizWords = [];
+let quizIndex = 0;
+let quizScore = 0;
+let quizAnswered = false;
+
+// ===================== THEME =====================
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.dataset.theme === 'dark';
+  html.dataset.theme = isDark ? 'light' : 'dark';
+  document.getElementById('theme-icon').className = isDark ? 'ti ti-moon' : 'ti ti-sun';
+  localStorage.setItem('toca-theme', html.dataset.theme);
+}
+(function initTheme() {
+  const saved = localStorage.getItem('toca-theme');
+  if (saved) {
+    document.documentElement.dataset.theme = saved;
+    document.getElementById('theme-icon').className = saved === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
+  }
+})();
+
+// ===================== TABS =====================
+function switchTab(btn, tab) {
+  document.querySelectorAll('.topbar-nav button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('view-words').style.display = tab === 'words' ? '' : 'none';
+  document.getElementById('view-add').style.display   = tab === 'add'   ? '' : 'none';
+  document.getElementById('view-quiz').style.display  = tab === 'quiz'  ? '' : 'none';
+}
+
+// ===================== WORDS VIEW =====================
+function getWords(section, part) {
+  if (!db[section]) return [];
+  if (part === 'all') return Object.values(db[section]).flat();
+  return db[section][part] || [];
+}
+
+function updateBadges() {
+  ['p1','p2','p3','p4'].forEach(p => {
+    const n = (db.lc[p] || []).length;
+    document.getElementById('badge-lc-' + p).textContent = n;
+  });
+  const total = Object.values(db.lc).flat().length;
+  document.getElementById('badge-lc-all').textContent = total;
+}
+
+function selectPart(section, part, el) {
+  currentSection = section;
+  currentPart    = part;
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  const map = {all:'전체',p1:'Part 1',p2:'Part 2',p3:'Part 3',p4:'Part 4'};
+  document.getElementById('words-title').textContent = 'LC ' + map[part];
+  renderWords();
+}
+
+function filterPOS(pos, btn) {
+  currentPOS = pos;
+  document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderWords();
+}
+
+function renderWords() {
+  const list = getWords(currentSection, currentPart);
+  const filtered = currentPOS === 'all' ? list : list.filter(w => w.pos === currentPOS);
+  document.getElementById('words-subtitle').textContent = list.length + '개 단어';
+
+  if (filtered.length === 0) {
+    document.getElementById('word-list').innerHTML = `
+      <div class="empty-state">
+        <i class="ti ti-books"></i>
+        <p>단어가 없습니다. 단어 추가 탭에서 단어를 입력해보세요.</p>
+      </div>`;
+    return;
+  }
+
+  const groups = {};
+  filtered.forEach(w => {
+    const k = w.pos || 'other';
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(w);
+  });
+
+  let html = '';
+  POS_ORDER.forEach(pos => {
+    if (!groups[pos]) return;
+    html += `<div class="pos-group">
+      <div class="pos-group-header">
+        <span class="pos-tag ${pos}">${POS_KO[pos] || pos}</span>
+        <span class="pos-count">${groups[pos].length}개</span>
+      </div>`;
+    groups[pos].forEach(w => {
+      const enSafe = w.en.replace(/'/g, "\\'");
+      html += `<div class="word-card">
+        <span class="word-en">${w.en}</span>
+        <div class="word-sep"></div>
+        <span class="word-ko">${w.ko}</span>
+        <div class="word-actions">
+          <button class="accent-pill" onclick="speak('${enSafe}','us',this)">🇺🇸 US</button>
+          <button class="accent-pill" onclick="speak('${enSafe}','uk',this)">🇬🇧 UK</button>
+          <button class="accent-pill" onclick="speak('${enSafe}','au',this)">🇦🇺 AU</button>
+          <div class="speed-wrap">
+            <label>속도</label>
+            <select class="speed-select" onchange="playbackSpeed=parseFloat(this.value)">
+              <option value="0.5">×0.5</option>
+              <option value="0.75">×0.75</option>
+              <option value="1" selected>×1.0</option>
+              <option value="1.25">×1.25</option>
+              <option value="1.5">×1.5</option>
+            </select>
+          </div>
+          <button class="delete-btn" onclick="deleteWord('${enSafe}','${w.pos}')" title="삭제">
+            <i class="ti ti-trash"></i>
+          </button>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  document.getElementById('word-list').innerHTML = html;
+}
+
+function deleteWord(en, pos) {
+  if (!confirm(`"${en}" 단어를 삭제할까요?`)) return;
+  ['p1','p2','p3','p4'].forEach(p => {
+    db.lc[p] = (db.lc[p] || []).filter(w => !(w.en === en && w.pos === pos));
+  });
+  saveDB();
+  updateBadges();
+  renderWords();
+  showToast(`"${en}" 삭제됨`);
+}
+
+// ===================== SPEAK =====================
+function speak(word, accent, btn) {
+  if (!window.speechSynthesis) { alert('이 브라우저는 음성을 지원하지 않습니다.'); return; }
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(word);
+  u.lang = ACCENTS[accent];
+  u.rate = playbackSpeed;
+  if (btn) {
+    document.querySelectorAll('.accent-pill.playing').forEach(b => b.classList.remove('playing'));
+    btn.classList.add('playing');
+    u.onend = u.onerror = () => btn.classList.remove('playing');
+  }
+  window.speechSynthesis.speak(u);
+}
+
+// ===================== ADD WORDS =====================
+async function parseWords() {
+  const input = document.getElementById('add-input').value.trim();
+  if (!input) { showToast('단어를 입력해주세요.'); return; }
+
+  const btn = document.getElementById('parse-btn');
+  btn.disabled = true;
+  document.getElementById('parse-status').classList.add('show');
+  document.getElementById('preview-box').classList.remove('show');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: `다음 입력에서 영어 단어들을 모두 추출하고, 각 단어의 토익 시험에 맞는 한국어 뜻과 품사를 분석해줘.
+반드시 순수 JSON 배열로만 응답해. 마크다운, 설명, 코드블록 없이 JSON만.
+형식: [{"en":"단어","ko":"한국어 뜻","pos":"noun|verb|adj|adv|prep"}]
+
+입력: ${input}`
+        }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content.map(i => i.text || '').join('');
+    parsedWords = JSON.parse(text.replace(/```json|```/g, '').trim());
+
+    let html = '';
+    parsedWords.forEach(w => {
+      html += `<div class="preview-item">
+        <span class="pi-en">${w.en}</span>
+        <span class="pi-ko">${w.ko}</span>
+        <span class="pi-pos"><span class="pos-tag ${w.pos}">${POS_KO[w.pos] || w.pos}</span></span>
+      </div>`;
+    });
+    document.getElementById('preview-list').innerHTML = html;
+    document.getElementById('preview-header').textContent =
+      `분석 결과 (${parsedWords.length}개) — 확인 후 추가하세요`;
+    document.getElementById('preview-box').classList.add('show');
+  } catch(e) {
+    showToast('분석 중 오류가 발생했습니다. 다시 시도해주세요.');
+    console.error(e);
+  }
+
+  document.getElementById('parse-status').classList.remove('show');
+  btn.disabled = false;
+}
+
+function confirmAdd() {
+  if (!parsedWords.length) return;
+  const part = document.getElementById('add-part').value;
+  if (!db.lc[part]) db.lc[part] = [];
+  let added = 0;
+  parsedWords.forEach(w => {
+    if (!db.lc[part].find(x => x.en === w.en)) {
+      db.lc[part].push(w);
+      added++;
+    }
+  });
+  saveDB();
+  updateBadges();
+  parsedWords = [];
+  document.getElementById('add-input').value = '';
+  document.getElementById('preview-box').classList.remove('show');
+  showToast(`${added}개 단어가 LC ${part.toUpperCase()}에 추가됐습니다!`);
+  // switch to words tab
+  document.querySelector('.topbar-nav button[data-tab="words"]').click();
+  selectPart('lc', part, document.querySelector(`.sidebar-item[data-nav="lc-${part}"]`));
+}
+
+function cancelAdd() {
+  parsedWords = [];
+  document.getElementById('preview-box').classList.remove('show');
+}
+
+// ===================== QUIZ =====================
+function setScope(scope, btn) {
+  quizScope = scope;
+  document.querySelectorAll('.scope-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function setQuizType(t) {
+  quizType = t;
+  document.getElementById('qtype-1').classList.toggle('selected', t === 1);
+  document.getElementById('qtype-2').classList.toggle('selected', t === 2);
+}
+
+function startQuiz() {
+  const pool = getWords('lc', quizScope === 'all' ? 'all' : quizScope);
+  if (pool.length < 2) { showToast('퀴즈를 시작하려면 최소 2개 이상의 단어가 필요합니다.'); return; }
+  quizWords = [...pool].sort(() => Math.random() - 0.5).slice(0, Math.min(10, pool.length));
+  quizIndex = 0; quizScore = 0; quizAnswered = false;
+
+  document.getElementById('quiz-setup').style.display  = 'none';
+  document.getElementById('quiz-game').style.display   = 'block';
+  document.getElementById('quiz-result').style.display = 'none';
+  showQuestion();
+}
+
+function showQuestion() {
+  const w = quizWords[quizIndex];
+  const total = quizWords.length;
+
+  document.getElementById('qp-text').textContent = `${quizIndex + 1} / ${total}`;
+  document.getElementById('qp-fill').style.width = ((quizIndex + 1) / total * 100) + '%';
+  document.getElementById('qp-score').textContent = quizScore + '점';
+
+  const feedback = document.getElementById('q-feedback');
+  feedback.className = 'quiz-feedback';
+  const next = document.getElementById('q-next');
+  next.className = 'quiz-next';
+  const inp = document.getElementById('q-input');
+  inp.value = '';
+  inp.className = 'quiz-input';
+  document.getElementById('q-submit').style.display = 'block';
+  quizAnswered = false;
+
+  if (quizType === 1) {
+    document.getElementById('q-type-label').textContent = '발음을 듣고 뜻을 입력하세요';
+    document.getElementById('q-display').innerHTML =
+      `<div class="qcard-icon-placeholder"><i class="ti ti-volume"></i></div>`;
+    document.getElementById('q-audio-row').style.display = 'flex';
+    const accents = ['us','uk','au'];
+    const rnd = accents[Math.floor(Math.random() * 3)];
+    setTimeout(() => {
+      if (!window.speechSynthesis) return;
+      const u = new SpeechSynthesisUtterance(w.en);
+      u.lang = ACCENTS[rnd];
+      u.rate = 1;
+      window.speechSynthesis.speak(u);
+    }, 300);
+  } else {
+    document.getElementById('q-type-label').textContent = '단어를 보고 뜻을 입력하세요';
+    document.getElementById('q-display').innerHTML = `<div class="qcard-word">${w.en}</div>`;
+    document.getElementById('q-audio-row').style.display = 'none';
+  }
+  inp.focus();
+}
+
+function playAudio(accent) {
+  const w = quizWords[quizIndex];
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(w.en);
+  u.lang = ACCENTS[accent];
+  u.rate = 1;
+  window.speechSynthesis.speak(u);
+}
+
+function checkAnswer() {
+  if (quizAnswered) return;
+  const inp = document.getElementById('q-input');
+  const val = inp.value.trim();
+  if (!val) return;
+  quizAnswered = true;
+
+  const w = quizWords[quizIndex];
+  const answers = w.ko.split(/[\/,]/).map(s => s.trim().toLowerCase());
+  const correct = answers.some(a => val.toLowerCase().includes(a) || a.includes(val.toLowerCase()));
+
+  const fb = document.getElementById('q-feedback');
+  if (correct) {
+    quizScore += 10;
+    inp.classList.add('correct');
+    fb.className = 'quiz-feedback correct';
+    fb.textContent = `정답! ✓  정답: "${w.ko}"`;
+  } else {
+    inp.classList.add('wrong');
+    fb.className = 'quiz-feedback wrong';
+    fb.textContent = `오답. 정답: "${w.ko}"`;
+  }
+
+  document.getElementById('q-submit').style.display = 'none';
+  document.getElementById('q-next').className = 'quiz-next show';
+  document.getElementById('qp-score').textContent = quizScore + '점';
+}
+
+function nextQuestion() {
+  quizIndex++;
+  if (quizIndex >= quizWords.length) showResult();
+  else showQuestion();
+}
+
+function showResult() {
+  document.getElementById('quiz-game').style.display   = 'none';
+  document.getElementById('quiz-result').style.display = 'block';
+  const total   = quizWords.length;
+  const correct = Math.round(quizScore / 10);
+  const pct     = Math.round(correct / total * 100);
+  document.getElementById('r-score').textContent    = correct;
+  document.getElementById('r-fraction').textContent = `/ ${total} 정답 (${pct}%)`;
+  document.getElementById('r-msg').textContent =
+    pct >= 90 ? '완벽합니다! 🎉' :
+    pct >= 70 ? '훌륭합니다! 👍' :
+    pct >= 50 ? '잘 하셨습니다! 📚' : '더 연습해봐요! 💪';
+}
+
+function resetQuiz() {
+  document.getElementById('quiz-setup').style.display  = 'block';
+  document.getElementById('quiz-game').style.display   = 'none';
+  document.getElementById('quiz-result').style.display = 'none';
+}
+
+// ===================== TOAST =====================
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ===================== INIT =====================
+updateBadges();
+renderWords();
+</script>
+</body>
+</html>
