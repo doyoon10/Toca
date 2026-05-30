@@ -1421,10 +1421,16 @@ function showQuestion() {
     // 발음 듣기 플래시카드 모드
     fcFlipped = false;
     const inner = document.getElementById('flashcard-inner');
+    // 트랜지션 끄고 즉시 앞면으로 돌린 뒤 내용 업데이트
+    inner.style.transition = 'none';
     inner.classList.remove('flipped');
     document.getElementById('fc-en-back').textContent = w.en;
     document.getElementById('fc-ko').textContent = w.ko;
     document.getElementById('fc-actions').style.display = 'none';
+    // 한 프레임 뒤 트랜지션 복원
+    requestAnimationFrame(() => {
+      inner.style.transition = '';
+    });
     // 자동 발음 재생
     const accents = ['us','uk','au'];
     setTimeout(() => {
