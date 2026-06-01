@@ -691,6 +691,132 @@
       50% { opacity: 0.5; transform: scale(0.92); }
     }
 
+    /* ===== SEARCH ===== */
+    .search-wrap {
+      position: relative;
+      margin-bottom: 10px;
+    }
+    .search-wrap .ti-search {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text4);
+      font-size: 15px;
+      pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      padding: 9px 12px 9px 34px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 13px;
+      box-sizing: border-box;
+      transition: border-color 0.15s;
+    }
+    .search-input:focus { outline: none; border-color: var(--border2); }
+    .search-input::placeholder { color: var(--text4); }
+
+    /* ===== EDIT MODAL ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-lg);
+      padding: 28px 24px 20px;
+      width: 340px;
+      box-shadow: var(--shadow-md);
+    }
+    .modal h3 { margin: 0 0 18px; font-size: 16px; }
+    .modal-field { margin-bottom: 14px; }
+    .modal-field label { display: block; font-size: 12px; color: var(--text3); margin-bottom: 5px; }
+    .modal-field input, .modal-field select {
+      width: 100%;
+      padding: 9px 11px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    .modal-field input:focus, .modal-field select:focus { outline: none; border-color: var(--accent); }
+    .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+    .modal-actions button { flex: 1; }
+
+    /* ===== UNDO TOAST ===== */
+    .undo-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 10px 18px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: var(--shadow-md);
+      opacity: 0;
+      transition: all 0.25s;
+      pointer-events: none;
+      z-index: 1001;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      white-space: nowrap;
+    }
+    .undo-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+    .undo-toast button {
+      background: var(--accent);
+      color: var(--accent-inv);
+      border: none;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* ===== SHUFFLE / EDIT BTNS ===== */
+    .edit-btn {
+      background: none;
+      border: none;
+      color: var(--text4);
+      padding: 4px 6px;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: color 0.12s, background 0.12s;
+    }
+    .edit-btn:hover { color: var(--accent); background: var(--bg2); }
+
+    /* 프리뷰 아이템 삭제 버튼 */
+    .preview-item { display: flex; align-items: center; gap: 10px; }
+    .pi-del {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: var(--text4);
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .pi-del:hover { color: var(--red); }
+
     /* ===== SCROLLBAR ===== */
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -801,6 +927,11 @@
           <h1 class="view-title" id="words-title">LC 전체</h1>
           <span class="view-subtitle" id="words-subtitle"></span>
         </div>
+        <div class="search-wrap">
+          <i class="ti ti-search"></i>
+          <input class="search-input" id="search-input" placeholder="영어 또는 한글로 검색..."
+            oninput="renderWords()" />
+        </div>
         <div class="filter-row">
           <span class="filter-label">품사</span>
           <button class="filter-chip active" onclick="filterPOS('all',this)">전체</button>
@@ -809,7 +940,10 @@
           <button class="filter-chip" onclick="filterPOS('adj',this)">형용사</button>
           <button class="filter-chip" onclick="filterPOS('adv',this)">부사</button>
           <button class="filter-chip" onclick="filterPOS('prep',this)">전치사</button>
-          <button class="select-all-btn" id="select-mode-btn" onclick="toggleSelectMode()" style="margin-left:auto">
+          <button class="select-all-btn" id="shuffle-btn" onclick="shuffleWords()" style="margin-left:auto">
+            <i class="ti ti-arrows-shuffle"></i> 셔플
+          </button>
+          <button class="select-all-btn" id="select-mode-btn" onclick="toggleSelectMode()">
             <i class="ti ti-checkbox"></i> 선택
           </button>
         </div>
@@ -960,6 +1094,43 @@
   </div>
 </div>
 
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <h3><i class="ti ti-pencil"></i> 단어 수정</h3>
+    <div class="modal-field">
+      <label>영어 단어</label>
+      <input id="edit-en" type="text" />
+    </div>
+    <div class="modal-field">
+      <label>한국어 뜻</label>
+      <input id="edit-ko" type="text" />
+    </div>
+    <div class="modal-field">
+      <label>품사</label>
+      <select id="edit-pos">
+        <option value="noun">명사</option>
+        <option value="verb">동사</option>
+        <option value="adj">형용사</option>
+        <option value="adv">부사</option>
+        <option value="prep">전치사</option>
+        <option value="phrase">구</option>
+        <option value="other">기타</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="saveEdit()"><i class="ti ti-check"></i> 저장</button>
+      <button class="btn btn-secondary" onclick="closeEditModal()">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- UNDO TOAST -->
+<div class="undo-toast" id="undo-toast">
+  <span id="undo-msg"></span>
+  <button onclick="undoAdd()">되돌리기</button>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -1007,10 +1178,16 @@ function saveDB() {
 let currentSection = 'lc';
 let currentPart    = 'all';
 let currentPOS     = 'all';
+let searchQuery    = '';
+let shuffled       = false;
+let shuffleOrder   = [];
 let parsedWords    = [];
 let playbackSpeed  = 1;
 let selectMode     = false;
-let selectedWords  = new Set(); // "en::pos" 형태의 키
+let selectedWords  = new Set();
+let lastAdded      = null; // 되돌리기용
+let editTarget     = null; // {section, part, idx}
+let undoTimer      = null;
 let quizType     = 1;
 let quizScope    = 'all';
 let quizSection  = 'lc';
@@ -1086,7 +1263,18 @@ function filterPOS(pos, btn) {
 
 function renderWords() {
   const list = getWords(currentSection, currentPart);
-  const filtered = currentPOS === 'all' ? list : list.filter(w => w.pos === currentPOS);
+  const q = (document.getElementById('search-input')?.value || '').trim().toLowerCase();
+  let filtered = currentPOS === 'all' ? list : list.filter(w => w.pos === currentPOS);
+  if (q) filtered = filtered.filter(w =>
+    w.en.toLowerCase().includes(q) || w.ko.toLowerCase().includes(q)
+  );
+  if (shuffled && shuffleOrder.length) {
+    filtered = [...filtered].sort((a, b) => {
+      const ai = shuffleOrder.indexOf(a.en + a.pos);
+      const bi = shuffleOrder.indexOf(b.en + b.pos);
+      return (ai === -1 ? 9999 : ai) - (bi === -1 ? 9999 : bi);
+    });
+  }
   document.getElementById('words-subtitle').textContent = list.length + '개 단어';
 
   if (filtered.length === 0) {
@@ -1128,6 +1316,9 @@ function renderWords() {
           <button class="accent-pill" onclick="speak('${enSafe}','us',this)">🇺🇸 US</button>
           <button class="accent-pill" onclick="speak('${enSafe}','uk',this)">🇬🇧 UK</button>
           <button class="accent-pill" onclick="speak('${enSafe}','au',this)">🇦🇺 AU</button>
+          <button class="edit-btn" onclick="openEditModal('${enSafe}','${w.pos}')" title="수정">
+            <i class="ti ti-pencil"></i>
+          </button>
           <button class="delete-btn" onclick="deleteWord('${enSafe}','${w.pos}')" title="삭제">
             <i class="ti ti-trash"></i>
           </button>
@@ -1230,6 +1421,86 @@ function deleteWord(en, pos) {
   showToast(`"${en}" 삭제됨`);
 }
 
+// ===================== SHUFFLE =====================
+function shuffleWords() {
+  const list = getWords(currentSection, currentPart);
+  shuffled = !shuffled;
+  if (shuffled) {
+    shuffleOrder = [...list].sort(() => Math.random() - 0.5).map(w => w.en + w.pos);
+    document.getElementById('shuffle-btn').classList.add('active');
+    showToast('단어가 셔플됐습니다!');
+  } else {
+    shuffleOrder = [];
+    document.getElementById('shuffle-btn').classList.remove('active');
+    showToast('원래 순서로 복원됐습니다.');
+  }
+  renderWords();
+}
+
+// ===================== EDIT MODAL =====================
+function openEditModal(en, pos) {
+  // 어느 section/part/idx인지 찾기
+  for (const sec of ['lc','rc']) {
+    if (!db[sec]) continue;
+    for (const part of Object.keys(db[sec])) {
+      const idx = db[sec][part].findIndex(w => w.en === en && w.pos === pos);
+      if (idx !== -1) {
+        editTarget = { sec, part, idx };
+        document.getElementById('edit-en').value  = en;
+        document.getElementById('edit-ko').value  = db[sec][part][idx].ko;
+        document.getElementById('edit-pos').value = pos;
+        document.getElementById('edit-modal').classList.add('show');
+        return;
+      }
+    }
+  }
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('show');
+  editTarget = null;
+}
+
+function saveEdit() {
+  if (!editTarget) return;
+  const { sec, part, idx } = editTarget;
+  const newEn  = document.getElementById('edit-en').value.trim();
+  const newKo  = document.getElementById('edit-ko').value.trim();
+  const newPos = document.getElementById('edit-pos').value;
+  if (!newEn || !newKo) { showToast('영어와 한국어를 모두 입력해주세요.'); return; }
+  db[sec][part][idx] = { en: newEn, ko: newKo, pos: newPos };
+  saveDB();
+  renderWords();
+  closeEditModal();
+  showToast('단어가 수정됐습니다!');
+}
+
+// ===================== UNDO ADD =====================
+function showUndoToast(msg) {
+  const el = document.getElementById('undo-toast');
+  document.getElementById('undo-msg').textContent = msg;
+  el.classList.add('show');
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(() => {
+    el.classList.remove('show');
+    lastAdded = null;
+  }, 6000);
+}
+
+function undoAdd() {
+  if (!lastAdded) return;
+  const { section, part, words } = lastAdded;
+  words.forEach(w => {
+    db[section][part] = db[section][part].filter(x => !(x.en === w.en && x.pos === w.pos));
+  });
+  saveDB();
+  updateBadges();
+  renderWords();
+  document.getElementById('undo-toast').classList.remove('show');
+  lastAdded = null;
+  showToast('추가가 취소됐습니다.');
+}
+
 // ===================== SPEAK =====================
 function speak(word, accent, btn) {
   if (!window.speechSynthesis) { alert('이 브라우저는 음성을 지원하지 않습니다.'); return; }
@@ -1268,15 +1539,7 @@ async function parseWords() {
     const data = await res.json();
     parsedWords = data.words;
 
-    let html = '';
-    parsedWords.forEach(w => {
-      html += `<div class="preview-item">
-        <span class="pi-en">${w.en}</span>
-        <span class="pi-ko">${w.ko}</span>
-        <span class="pi-pos"><span class="pos-tag ${w.pos}">${POS_KO[w.pos] || w.pos}</span></span>
-      </div>`;
-    });
-    document.getElementById('preview-list').innerHTML = html;
+    renderPreview();
     document.getElementById('preview-header').textContent =
       `분석 결과 (${parsedWords.length}개) — 확인 후 추가하세요`;
     document.getElementById('preview-box').classList.add('show');
@@ -1295,19 +1558,32 @@ function confirmAdd() {
   const part    = document.getElementById('add-part').value;
   if (!db[section]) db[section] = {};
   if (!db[section][part]) db[section][part] = [];
-  let added = 0;
+  const addedWords = [];
+  let skipped = 0;
   parsedWords.forEach(w => {
-    if (!db[section][part].find(x => x.en === w.en)) {
+    // 같은 파트 내 중복 자동 제거
+    if (db[section][part].find(x => x.en === w.en)) {
+      skipped++;
+    } else {
       db[section][part].push(w);
-      added++;
+      addedWords.push(w);
     }
   });
   saveDB();
   updateBadges();
+  // 되돌리기용 저장
+  if (addedWords.length) {
+    lastAdded = { section, part, words: addedWords };
+    const msg = skipped
+      ? `${addedWords.length}개 추가 (중복 ${skipped}개 제외)`
+      : `${addedWords.length}개 추가됨`;
+    showUndoToast(msg);
+  } else {
+    showToast('모두 중복된 단어입니다.');
+  }
   parsedWords = [];
   document.getElementById('add-input').value = '';
   document.getElementById('preview-box').classList.remove('show');
-  showToast(`${added}개 단어가 ${section.toUpperCase()} ${part.toUpperCase()}에 추가됐습니다!`);
   document.querySelector('.topbar-nav button[data-tab="words"]').click();
   selectPart(section, part, document.querySelector(`.sidebar-item[data-nav="${section}-${part}"]`));
 }
@@ -1319,6 +1595,30 @@ function updatePartSelect() {
     sel.innerHTML = '<option value="p1">LC Part 1</option><option value="p2">LC Part 2</option><option value="p3">LC Part 3</option><option value="p4">LC Part 4</option>';
   } else {
     sel.innerHTML = '<option value="p5">RC Part 5</option><option value="p6">RC Part 6</option><option value="p7">RC Part 7</option>';
+  }
+}
+
+function renderPreview() {
+  let html = '';
+  parsedWords.forEach((w, i) => {
+    html += `<div class="preview-item" id="pi-${i}">
+      <span class="pi-en">${w.en}</span>
+      <span class="pi-ko">${w.ko}</span>
+      <span class="pi-pos"><span class="pos-tag ${w.pos}">${POS_KO[w.pos] || w.pos}</span></span>
+      <button class="pi-del" onclick="removePreviewItem(${i})" title="제거"><i class="ti ti-x"></i></button>
+    </div>`;
+  });
+  document.getElementById('preview-list').innerHTML = html;
+  document.getElementById('preview-header').textContent =
+    `분석 결과 (${parsedWords.length}개) — 확인 후 추가하세요`;
+}
+
+function removePreviewItem(i) {
+  parsedWords.splice(i, 1);
+  if (parsedWords.length === 0) {
+    document.getElementById('preview-box').classList.remove('show');
+  } else {
+    renderPreview();
   }
 }
 

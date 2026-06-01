@@ -11,23 +11,6 @@
 - **다크 모드** — 라이트 / 다크 토글
 - **로컬 저장** — 추가한 단어는 브라우저 localStorage에 자동 저장
 
-## 사용 방법
-
-### 로컬에서 바로 실행
-`index.html` 파일을 브라우저에서 열면 바로 작동합니다.
-
-### GitHub Pages로 배포
-1. GitHub에서 새 Repository 생성
-2. `index.html` 파일 업로드
-3. Repository Settings → Pages → Source: `main` branch → Save
-4. `https://<유저명>.github.io/<레포명>/` 으로 접속
-
-## 파일 구조
-
-```
-toca/
-└── index.html   ← 모든 코드가 담긴 단일 파일
-```
 
 ## 참고
 
