@@ -1323,8 +1323,8 @@
     <!-- 내보내기 -->
     <div id="export-panel">
       <p style="font-size:13px;color:var(--text3);margin:0 0 8px">코드를 생성해서 상대방에게 전달하세요. 코드는 6자리예요.</p>
-      <textarea class="export-textarea" id="export-code" readonly
-        style="height:56px;font-size:20px;font-weight:700;text-align:center;letter-spacing:0.3em;line-height:36px;resize:none"></textarea>
+      <input type="text" id="export-code" readonly placeholder="코드가 여기에 표시됩니다"
+        style="width:100%;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:14px;font-weight:600;letter-spacing:0.1em;box-sizing:border-box;text-align:center" />
       <div class="export-modal-actions">
         <button class="btn btn-primary" id="export-gen-btn" onclick="doExport()"><i class="ti ti-sparkles"></i> 코드 생성</button>
         <button class="btn btn-secondary" id="copy-export-btn" onclick="copyExportCode()" style="display:none"><i class="ti ti-copy"></i> 복사</button>
@@ -1338,7 +1338,7 @@
       <input type="text" id="import-code" maxlength="6"
         placeholder="예: AB3X9K"
         onkeydown="if(event.key==='Enter')doImport()"
-        style="width:100%;padding:12px;font-size:20px;font-weight:700;text-align:center;letter-spacing:0.3em;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);box-sizing:border-box;text-transform:uppercase" />
+        style="width:100%;padding:10px 12px;font-size:14px;font-weight:600;text-align:center;letter-spacing:0.1em;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);box-sizing:border-box;text-transform:uppercase" />
       <div id="import-error" style="font-size:12px;color:var(--red);margin-top:6px;min-height:16px"></div>
       <div class="export-modal-actions">
         <button class="btn btn-primary" onclick="doImport()"><i class="ti ti-download"></i> 가져오기</button>
