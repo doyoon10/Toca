@@ -1322,18 +1322,23 @@
 
     <!-- 내보내기 -->
     <div id="export-panel">
-      <p style="font-size:13px;color:var(--text3);margin:0 0 8px">아래 코드를 복사해서 상대방에게 전달하세요.</p>
-      <textarea class="export-textarea" id="export-code" readonly></textarea>
+      <p style="font-size:13px;color:var(--text3);margin:0 0 8px">코드를 생성해서 상대방에게 전달하세요. 코드는 6자리예요.</p>
+      <textarea class="export-textarea" id="export-code" readonly
+        style="height:70px;font-size:28px;font-weight:700;text-align:center;letter-spacing:0.2em"></textarea>
       <div class="export-modal-actions">
-        <button class="btn btn-primary" onclick="copyExportCode()"><i class="ti ti-copy"></i> 코드 복사</button>
+        <button class="btn btn-primary" id="export-gen-btn" onclick="doExport()"><i class="ti ti-sparkles"></i> 코드 생성</button>
+        <button class="btn btn-secondary" id="copy-export-btn" onclick="copyExportCode()" style="display:none"><i class="ti ti-copy"></i> 복사</button>
         <button class="btn btn-secondary" onclick="closeExportModal()">닫기</button>
       </div>
     </div>
 
     <!-- 가져오기 -->
     <div id="import-panel" style="display:none">
-      <p style="font-size:13px;color:var(--text3);margin:0 0 8px">받은 코드를 아래에 붙여넣으세요. 중복 단어는 자동으로 건너뜁니다.</p>
-      <textarea class="export-textarea" id="import-code" placeholder="여기에 코드를 붙여넣으세요..."></textarea>
+      <p style="font-size:13px;color:var(--text3);margin:0 0 8px">받은 6자리 코드를 입력하세요. 중복 단어는 자동으로 건너뜁니다.</p>
+      <input type="text" id="import-code" maxlength="6"
+        placeholder="예: AB3X9K"
+        onkeydown="if(event.key==='Enter')doImport()"
+        style="width:100%;padding:16px;font-size:24px;font-weight:700;text-align:center;letter-spacing:0.2em;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);box-sizing:border-box;text-transform:uppercase" />
       <div id="import-error" style="font-size:12px;color:var(--red);margin-top:6px;min-height:16px"></div>
       <div class="export-modal-actions">
         <button class="btn btn-primary" onclick="doImport()"><i class="ti ti-download"></i> 가져오기</button>
@@ -2104,9 +2109,8 @@ function resetQuiz() {
 
 // ===================== EXPORT / IMPORT =====================
 function openExportModal() {
-  // 내보내기 코드 생성
-  const code = btoa(encodeURIComponent(JSON.stringify(db)));
-  document.getElementById('export-code').value = code;
+  document.getElementById('export-code').value = '';
+  document.getElementById('export-code').placeholder = '생성 버튼을 눌러주세요';
   document.getElementById('import-code').value = '';
   document.getElementById('import-error').textContent = '';
   switchExportTab('export');
@@ -2124,10 +2128,48 @@ function switchExportTab(tab) {
   document.getElementById('etab-import').classList.toggle('active', tab === 'import');
 }
 
-function copyExportCode() {
+function generateCode(len = 6) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < len; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+async function doExport() {
+  const btn = document.getElementById('export-gen-btn');
+  btn.disabled = true;
+  btn.textContent = '생성 중...';
+
+  const code = generateCode(6);
+  const { error } = await supa.from('shared_wordbooks').insert({
+    code,
+    data: db
+  });
+
+  if (error) {
+    showToast('오류가 발생했습니다. 다시 시도해주세요.');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-refresh"></i> 코드 생성';
+    return;
+  }
+
   const el = document.getElementById('export-code');
-  el.select();
-  navigator.clipboard.writeText(el.value).then(() => {
+  el.value = code;
+  el.style.fontSize = '28px';
+  el.style.fontWeight = '700';
+  el.style.textAlign = 'center';
+  el.style.letterSpacing = '0.2em';
+  el.style.height = '70px';
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-refresh"></i> 다시 생성';
+  document.getElementById('copy-export-btn').style.display = '';
+}
+
+function copyExportCode() {
+  const code = document.getElementById('export-code').value.trim();
+  if (!code) return;
+  navigator.clipboard.writeText(code).then(() => {
     showToast('코드가 복사됐습니다!');
   }).catch(() => {
     document.execCommand('copy');
@@ -2135,21 +2177,31 @@ function copyExportCode() {
   });
 }
 
-function doImport() {
-  const code = document.getElementById('import-code').value.trim();
+async function doImport() {
+  const code = document.getElementById('import-code').value.trim().toUpperCase();
   const errEl = document.getElementById('import-error');
   errEl.textContent = '';
   if (!code) { errEl.textContent = '코드를 입력해주세요.'; return; }
 
-  let imported;
-  try {
-    imported = JSON.parse(decodeURIComponent(atob(code)));
-  } catch(e) {
-    errEl.textContent = '올바르지 않은 코드예요. 다시 확인해주세요.';
+  const btn = document.querySelector('#import-panel .btn-primary');
+  btn.disabled = true;
+  btn.textContent = '불러오는 중...';
+
+  const { data, error } = await supa
+    .from('shared_wordbooks')
+    .select('data')
+    .eq('code', code)
+    .single();
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-download"></i> 가져오기';
+
+  if (error || !data) {
+    errEl.textContent = '코드를 찾을 수 없어요. 다시 확인해주세요.';
     return;
   }
 
-  // 유효성 검사
+  const imported = data.data;
   if (!imported.lc && !imported.rc) {
     errEl.textContent = '단어장 형식이 올바르지 않아요.';
     return;
