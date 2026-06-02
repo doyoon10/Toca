@@ -1338,7 +1338,7 @@
       <input type="text" id="import-code" maxlength="6"
         placeholder="예: AB3X9K"
         onkeydown="if(event.key==='Enter')doImport()"
-        style="width:100%;padding:10px 12px;font-size:14px;font-weight:600;text-align:center;letter-spacing:0.1em;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);box-sizing:border-box;text-transform:uppercase" />
+        style="width:100%;padding:10px 12px;font-size:14px;font-weight:600;text-align:center;letter-spacing:0.1em;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);box-sizing:border-box;text-transform:uppercase;display:block" />
       <div id="import-error" style="font-size:12px;color:var(--red);margin-top:6px;min-height:16px"></div>
       <div class="export-modal-actions">
         <button class="btn btn-primary" onclick="doImport()"><i class="ti ti-download"></i> 가져오기</button>
@@ -2294,9 +2294,17 @@ async function doSignup() {
 async function doLogout() {
   await supa.auth.signOut();
   currentUser = null;
+  localStorage.removeItem('toca-db');
   document.getElementById('main-app').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('user-chip').style.display = 'none';
+  // 탭 초기화
+  document.getElementById('login-btn').disabled = false;
+  document.getElementById('login-btn').textContent = '로그인';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-pw').value = '';
+  document.getElementById('login-error').textContent = '';
+  switchAuthTab('login');
 }
 
 // ── Supabase DB 동기화 ──────────────────────────
