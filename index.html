@@ -958,6 +958,24 @@
       background: var(--border);
     }
 
+    /* ===== EXPORT/IMPORT MODAL ===== */
+    .export-textarea {
+      width: 100%;
+      height: 180px;
+      padding: 10px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 12px;
+      font-family: monospace;
+      resize: none;
+      box-sizing: border-box;
+      margin-top: 8px;
+    }
+    .export-textarea:focus { outline: none; border-color: var(--accent); }
+    .export-modal-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
     /* ===== SCROLLBAR ===== */
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -1063,6 +1081,9 @@
         <div class="user-avatar" id="user-avatar"></div>
         <button class="logout-btn" onclick="doLogout()"><i class="ti ti-logout"></i> 로그아웃</button>
       </div>
+      <button class="icon-btn" onclick="openExportModal()" title="내보내기/가져오기">
+        <i class="ti ti-package-export"></i>
+      </button>
       <button class="icon-btn" id="theme-toggle" onclick="toggleTheme()" title="다크/라이트 모드">
         <i class="ti ti-moon" id="theme-icon"></i>
       </button>
@@ -1287,6 +1308,39 @@
     </main>
   </div>
 </div>
+</div>
+
+<!-- EXPORT/IMPORT MODAL -->
+<div class="modal-overlay" id="export-modal">
+  <div class="modal" style="width:420px">
+    <h3><i class="ti ti-package-export"></i> 단어장 내보내기 / 가져오기</h3>
+
+    <div class="auth-tabs" style="margin-bottom:16px">
+      <button class="auth-tab active" id="etab-export" onclick="switchExportTab('export')">내보내기</button>
+      <button class="auth-tab" id="etab-import" onclick="switchExportTab('import')">가져오기</button>
+    </div>
+
+    <!-- 내보내기 -->
+    <div id="export-panel">
+      <p style="font-size:13px;color:var(--text3);margin:0 0 8px">아래 코드를 복사해서 상대방에게 전달하세요.</p>
+      <textarea class="export-textarea" id="export-code" readonly></textarea>
+      <div class="export-modal-actions">
+        <button class="btn btn-primary" onclick="copyExportCode()"><i class="ti ti-copy"></i> 코드 복사</button>
+        <button class="btn btn-secondary" onclick="closeExportModal()">닫기</button>
+      </div>
+    </div>
+
+    <!-- 가져오기 -->
+    <div id="import-panel" style="display:none">
+      <p style="font-size:13px;color:var(--text3);margin:0 0 8px">받은 코드를 아래에 붙여넣으세요. 중복 단어는 자동으로 건너뜁니다.</p>
+      <textarea class="export-textarea" id="import-code" placeholder="여기에 코드를 붙여넣으세요..."></textarea>
+      <div id="import-error" style="font-size:12px;color:var(--red);margin-top:6px;min-height:16px"></div>
+      <div class="export-modal-actions">
+        <button class="btn btn-primary" onclick="doImport()"><i class="ti ti-download"></i> 가져오기</button>
+        <button class="btn btn-secondary" onclick="closeExportModal()">닫기</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- EDIT MODAL -->
@@ -2046,6 +2100,81 @@ function resetQuiz() {
   document.getElementById('quiz-game').style.display   = 'none';
   document.getElementById('quiz-result').style.display = 'none';
   updateQuizCountInfo();
+}
+
+// ===================== EXPORT / IMPORT =====================
+function openExportModal() {
+  // 내보내기 코드 생성
+  const code = btoa(encodeURIComponent(JSON.stringify(db)));
+  document.getElementById('export-code').value = code;
+  document.getElementById('import-code').value = '';
+  document.getElementById('import-error').textContent = '';
+  switchExportTab('export');
+  document.getElementById('export-modal').classList.add('show');
+}
+
+function closeExportModal() {
+  document.getElementById('export-modal').classList.remove('show');
+}
+
+function switchExportTab(tab) {
+  document.getElementById('export-panel').style.display = tab === 'export' ? '' : 'none';
+  document.getElementById('import-panel').style.display = tab === 'import' ? '' : 'none';
+  document.getElementById('etab-export').classList.toggle('active', tab === 'export');
+  document.getElementById('etab-import').classList.toggle('active', tab === 'import');
+}
+
+function copyExportCode() {
+  const el = document.getElementById('export-code');
+  el.select();
+  navigator.clipboard.writeText(el.value).then(() => {
+    showToast('코드가 복사됐습니다!');
+  }).catch(() => {
+    document.execCommand('copy');
+    showToast('코드가 복사됐습니다!');
+  });
+}
+
+function doImport() {
+  const code = document.getElementById('import-code').value.trim();
+  const errEl = document.getElementById('import-error');
+  errEl.textContent = '';
+  if (!code) { errEl.textContent = '코드를 입력해주세요.'; return; }
+
+  let imported;
+  try {
+    imported = JSON.parse(decodeURIComponent(atob(code)));
+  } catch(e) {
+    errEl.textContent = '올바르지 않은 코드예요. 다시 확인해주세요.';
+    return;
+  }
+
+  // 유효성 검사
+  if (!imported.lc && !imported.rc) {
+    errEl.textContent = '단어장 형식이 올바르지 않아요.';
+    return;
+  }
+
+  let added = 0;
+  for (const sec of ['lc','rc']) {
+    if (!imported[sec]) continue;
+    if (!db[sec]) db[sec] = {};
+    for (const part of Object.keys(imported[sec])) {
+      if (!db[sec][part]) db[sec][part] = [];
+      (imported[sec][part] || []).forEach(w => {
+        if (w.en && w.ko && !db[sec][part].find(x => x.en === w.en)) {
+          db[sec][part].push(w);
+          added++;
+        }
+      });
+    }
+  }
+
+  saveDB();
+  updateBadges();
+  renderWords();
+  closeExportModal();
+  showToast(`${added}개 단어를 가져왔습니다!`);
 }
 
 // ===================== TOAST =====================
