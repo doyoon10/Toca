@@ -32,7 +32,7 @@ export default async function handler(req, res) {
           },
           {
             role: 'user',
-            content: `다음 입력에서 영어 단어와 표현들을 모두 추출하고, 각각의 토익 시험에 맞는 한국어 뜻과 품사를 분석해줘. JSON 배열을 반드시 완전하게 ] 로 닫아서 끝내야 해.
+            content: `다음 입력에서 영어 단어와 표현들을 모두 추출하고, 각각의 토익 시험에 맞는 한국어 뜻과 품사를 분석해줘. 꼭 한국어 뜻이어야돼. JSON 배열을 반드시 완전하게 ] 로 닫아서 끝내야 해.
 형식: [{"en":"단어또는표현","ko":"한국어 뜻","pos":"noun|verb|adj|adv|prep|phrase"}]
 
 입력: ${input.trim()}`
